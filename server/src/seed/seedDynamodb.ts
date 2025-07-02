@@ -10,12 +10,12 @@ import pluralize from "pluralize";
 import Transaction from "../models/transactionModel";
 import Course from "../models/courseModel";
 import UserCourseProgress from "../models/userCourseProgressModel";
+import TeacherEarnings from "../models/teacherEarningsModel";
 import dotenv from "dotenv";
 
 dotenv.config();
 let client: DynamoDBClient;
 
-/* DynamoDB Configuration */
 const isProduction = process.env.NODE_ENV === "production";
 
 if (!isProduction) {
@@ -34,19 +34,15 @@ if (!isProduction) {
   });
 }
 
-/* DynamoDB Suppress Tag Warnings */
 const originalWarn = console.warn.bind(console);
 console.warn = (message, ...args) => {
-  if (
-    !message.includes("Tagging is not currently supported in DynamoDB Local")
-  ) {
+  if (!message.includes("Tagging is not currently supported in DynamoDB Local")) {
     originalWarn(message, ...args);
   }
 };
 
 async function createTables() {
-  const models = [Transaction, UserCourseProgress, Course];
-
+  const models = [Transaction, UserCourseProgress, Course, TeacherEarnings];
   for (const model of models) {
     const tableName = model.name;
     const table = new dynamoose.Table(tableName, [model], {
@@ -59,55 +55,67 @@ async function createTables() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await table.initialize();
-      console.log(`Table created and initialized: ${tableName}`);
+      console.log(`✅ Table ready: ${tableName}`);
     } catch (error: any) {
-      console.error(
-        `Error creating table ${tableName}:`,
-        error.message,
-        error.stack
-      );
+      console.error(`❌ Failed to create ${tableName}:`, error.message);
     }
   }
 }
 
 async function seedData(tableName: string, filePath: string) {
-  const data: { [key: string]: any }[] = JSON.parse(
-    fs.readFileSync(filePath, "utf8")
-  );
+  const data: { [key: string]: any }[] = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const formattedTableName = pluralize.singular(tableName.charAt(0).toUpperCase() + tableName.slice(1));
 
-  const formattedTableName = pluralize.singular(
-    tableName.charAt(0).toUpperCase() + tableName.slice(1)
-  );
-
-  console.log(`Seeding data to table: ${formattedTableName}`);
+  console.log(`🌱 Seeding ${formattedTableName} from ${tableName}.json (${data.length} items)`);
 
   for (const item of data) {
     try {
       await dynamoose.model(formattedTableName).create(item);
+      console.log(`  ➕ Inserted ${formattedTableName} key= ${item.teacherId || item.userId || item.courseId}`);
     } catch (err) {
-      console.error(
-        `Unable to add item to ${formattedTableName}. Error:`,
-        JSON.stringify(err, null, 2)
-      );
+      console.error(`❌ Error inserting into ${formattedTableName}:`, err);
+    }
+  }
+}
+
+async function generateTeacherEarnings() {
+  console.log("💰 Generating TeacherEarnings from Courses table…");
+  const courses = await Course.scan().exec();
+
+  for (const course of courses) {
+    const enrollCount = Array.isArray(course.enrollments) ? course.enrollments.length : 0;
+    const earnings = (course.price ?? 0) * enrollCount;
+
+    const teacherEarning = {
+      teacherId: course.teacherId,
+      courseId: course.courseId,
+      title: course.title,
+      enrollCount,
+      earnings,
+      updatedAt: new Date().toISOString(),
+    };
+
+    try {
+      await TeacherEarnings.create(teacherEarning);
+      console.log(`  💸 Inserted earnings for course: ${course.title}`);
+    } catch (err) {
+      console.error(`❌ Error inserting TeacherEarnings for ${course.title}:`, err);
     }
   }
 
-  console.log(
-    "\x1b[32m%s\x1b[0m",
-    `Successfully seeded data to table: ${formattedTableName}`
-  );
+  console.log("✅ Finished generating TeacherEarnings from courses");
 }
 
 async function deleteTable(baseTableName: string) {
-  let deleteCommand = new DeleteTableCommand({ TableName: baseTableName });
+  const deleteCommand = new DeleteTableCommand({ TableName: baseTableName });
   try {
     await client.send(deleteCommand);
-    console.log(`Table deleted: ${baseTableName}`);
+    console.log(`🗑 Deleted table: ${baseTableName}`);
   } catch (err: any) {
     if (err.name === "ResourceNotFoundException") {
-      console.log(`Table does not exist: ${baseTableName}`);
+      console.log(`⚠️ Table does not exist: ${baseTableName}`);
     } else {
-      console.error(`Error deleting table ${baseTableName}:`, err);
+      console.error(`❌ Error deleting ${baseTableName}:`, err);
     }
   }
 }
@@ -125,24 +133,31 @@ async function deleteAllTables() {
 }
 
 export default async function seed() {
+  console.log("🔔 Starting seed script…");
   await deleteAllTables();
   await new Promise((resolve) => setTimeout(resolve, 1000));
+
   await createTables();
 
-  const seedDataPath = path.join(__dirname, "./data");
-  const files = fs
-    .readdirSync(seedDataPath)
-    .filter((file) => file.endsWith(".json"));
+  const dataDir = path.join(__dirname, "./data");
+  const files = fs.readdirSync(dataDir).filter((f) => f.endsWith(".json"));
 
   for (const file of files) {
     const tableName = path.basename(file, ".json");
-    const filePath = path.join(seedDataPath, file);
+    const filePath = path.join(dataDir, file);
+
+    // Skip teacherEarnings.json since we will auto-generate
+    if (tableName === "teacherEarnings") continue;
+
     await seedData(tableName, filePath);
   }
+
+  await generateTeacherEarnings();
+  console.log("🎉 Seed script finished.");
 }
 
 if (require.main === module) {
   seed().catch((error) => {
-    console.error("Failed to run seed script:", error);
+    console.error("❌ Failed to run seed script:", error);
   });
 }

@@ -40,7 +40,7 @@ const AppSidebar = () => {
     ],
     teacher: [
       { icon: BookOpen, label: "Courses", href: "/teacher/courses" },
-      { icon: DollarSign, label: "Earnings", href: "/teacher/earningszx" },
+      { icon: DollarSign, label: "Earnings", href: "/teacher/earnings" },
       { icon: User, label: "Profile", href: "/teacher/profile" },
       { icon: Settings, label: "Settings", href: "/teacher/settings" },
     ],

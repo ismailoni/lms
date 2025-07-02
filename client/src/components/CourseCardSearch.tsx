@@ -7,6 +7,7 @@ const CourseCardSearch = ({
   isSelected,
   onClick,
 }: SearchCourseCardProps) => {
+  console.log("course.image 👉", course.image);
   return (
     <div
       onClick={onClick}

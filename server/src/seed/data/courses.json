@@ -378,5 +378,224 @@
         ]
       }
     ]
+  },
+  {
+    "courseId": "cd41ef29-7890-4f5f-95e2-93f85ee8efcb",
+    "teacherId": "user_2zI0fKlsVUu2rAZi0w5bmFvDyCF",
+    "teacherName": "Ismail Oni",
+    "title": "Frontend Sorcery: Mastering React & Next.js",
+    "description": "Unlock the wizardry behind modern frontend development using React, Next.js, and Tailwind CSS. No wands required.",
+    "category": "Web Development",
+    "image": "https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg",
+    "price": 2999,
+    "level": "Intermediate",
+    "status": "Published",
+    "enrollments": [
+      { "userId": "user_learnerA" },
+      { "userId": "user_learnerB" },
+      { "userId": "user_learnerC" },
+      { "userId": "user_learnerD" }
+    ],
+    "sections": [
+      {
+        "sectionId": "a1b2c3d4-5678-9101-1121-314151617181",
+        "sectionTitle": "Welcome & Setup",
+        "sectionDescription": "Get your dev environment ready and understand the course structure.",
+        "chapters": [
+          {
+            "chapterId": "c1a2b3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+            "type": "Video",
+            "title": "Course Overview & Tools",
+            "content": "https://example.com/videos/course-overview.mp4",
+            "video": "https://example.com/videos/course-overview.mp4",
+            "comments": [
+              {
+                "commentId": "comm-001",
+                "userId": "user_learnerA",
+                "text": "Can't wait to start building!",
+                "timestamp": "2025-07-02T12:00:00Z"
+              }
+            ]
+          },
+          {
+            "chapterId": "d2b3c4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7",
+            "type": "Text",
+            "title": "Setting Up Your Environment",
+            "content": "We'll guide you through installing Node.js, VS Code, and other tools needed to slay bugs in style.",
+            "comments": []
+          }
+        ]
+      },
+      {
+        "sectionId": "b2c3d4e5-6789-1011-1213-141516171819",
+        "sectionTitle": "React Fundamentals",
+        "sectionDescription": "Master components, props, and state — the holy trinity of React.",
+        "chapters": [
+          {
+            "chapterId": "e3c4d5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8",
+            "type": "Video",
+            "title": "Understanding Components",
+            "content": "https://example.com/videos/components.mp4",
+            "video": "https://example.com/videos/components.mp4",
+            "comments": []
+          },
+          {
+            "chapterId": "f4d5e6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9",
+            "type": "Text",
+            "title": "Props & State Explained",
+            "content": "Props are like potions passed from one wizard to another; state is your personal spellbook that changes over time.",
+            "comments": []
+          },
+          {
+            "chapterId": "g5e6f7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0",
+            "type": "Quiz",
+            "title": "React Basics Quiz",
+            "content": "1. What's the difference between props and state?\n2. Can you update props inside a component?\n3. What hook do you use to handle state in a functional component?",
+            "comments": []
+          }
+        ]
+      },
+      {
+        "sectionId": "c3d4e5f6-7890-1121-3141-516171819202",
+        "sectionTitle": "Next.js & Beyond",
+        "sectionDescription": "Learn to harness server-side magic with Next.js and level up your app.",
+        "chapters": [
+          {
+            "chapterId": "h6f7g8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1",
+            "type": "Video",
+            "title": "Routing in Next.js",
+            "content": "https://example.com/videos/nextjs-routing.mp4",
+            "video": "https://example.com/videos/nextjs-routing.mp4",
+            "comments": []
+          },
+          {
+            "chapterId": "i7g8h9j0-k1l2-m3n4-o5p6-q7r8s9t0u1v2",
+            "type": "Text",
+            "title": "Static & Server-Side Props",
+            "content": "Understand getStaticProps, getServerSideProps, and how to conjure data on the fly.",
+            "comments": []
+          },
+          {
+            "chapterId": "j8h9i0k1-l2m3-n4o5-p6q7-r8s9t0u1v2w3",
+            "type": "Quiz",
+            "title": "Next.js Knowledge Test",
+            "content": "1. What function is used for static generation?\n2. Explain dynamic routing in Next.js.\n3. How can you handle API routes?",
+            "comments": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "courseId": "f7c2e3d4-8a9b-4c5d-9e7f-3d2f1b0c9a8b",
+    "teacherId": "user_2zI0fKlsVUu2rAZi0w5bmFvDyCF",
+    "teacherName": "Ismail Oni",
+    "title": "Full-Stack Fusion: From Zero to Deployment",
+    "description": "Master both frontend and backend development in this ultimate full-stack bootcamp. Build, deploy, and flex on your friends.",
+    "category": "Software Engineering",
+    "image": "https://images.pexels.com/photos/1181675/pexels-photo-1181675.jpeg",
+    "price": 5999,
+    "level": "Advanced",
+    "status": "Published",
+    "enrollments": [
+      { "userId": "user_alpha" },
+      { "userId": "user_bravo" },
+      { "userId": "user_charlie" },
+      { "userId": "user_delta" },
+      { "userId": "user_echo" },
+      { "userId": "user_foxtrot" },
+      { "userId": "user_golf" },
+      { "userId": "user_hotel" },
+      { "userId": "user_india" }
+    ],
+    "sections": [
+      {
+        "sectionId": "s1a2b3c4-d5e6-7890-1121-314151617181",
+        "sectionTitle": "Frontend Foundations",
+        "sectionDescription": "Brush up on React, Next.js, and modern UI tricks.",
+        "chapters": [
+          {
+            "chapterId": "ch1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+            "type": "Video",
+            "title": "Modern React Essentials",
+            "content": "https://example.com/videos/react-essentials.mp4",
+            "video": "https://example.com/videos/react-essentials.mp4",
+            "comments": []
+          },
+          {
+            "chapterId": "ch2b3c4d5-e6f7-g8h9-i0j1-k2l3m4n5o6p7",
+            "type": "Text",
+            "title": "State Management in React",
+            "content": "Learn the art of managing state with hooks, context, and even a sprinkle of Zustand or Redux if you're feeling spicy.",
+            "comments": []
+          },
+          {
+            "chapterId": "ch3c4d5e6-f7g8-h9i0-j1k2-l3m4n5o6p7q8",
+            "type": "Quiz",
+            "title": "React Quick Quiz",
+            "content": "1. What is the virtual DOM?\n2. Difference between useEffect and useLayoutEffect?\n3. When would you use context?",
+            "comments": []
+          }
+        ]
+      },
+      {
+        "sectionId": "s2b3c4d5-e6f7-8910-1112-131415161718",
+        "sectionTitle": "Backend Basics",
+        "sectionDescription": "Dive into Node.js, Express, and APIs like a backend ninja.",
+        "chapters": [
+          {
+            "chapterId": "ch4d5e6f7-g8h9-i0j1-k2l3-m4n5o6p7q8r9",
+            "type": "Video",
+            "title": "Introduction to Node.js",
+            "content": "https://example.com/videos/node-intro.mp4",
+            "video": "https://example.com/videos/node-intro.mp4",
+            "comments": []
+          },
+          {
+            "chapterId": "ch5e6f7g8-h9i0-j1k2-l3m4-n5o6p7q8r9s0",
+            "type": "Text",
+            "title": "Building REST APIs",
+            "content": "REST APIs let you talk to your frontend like a polite guest at a party. Learn the basics of routes, controllers, and middleware.",
+            "comments": []
+          },
+          {
+            "chapterId": "ch6f7g8h9-i0j1-k2l3-m4n5-o6p7q8r9s0t1",
+            "type": "Quiz",
+            "title": "Backend Basics Quiz",
+            "content": "1. What is middleware?\n2. Difference between PUT and PATCH?\n3. Explain request and response objects in Express.",
+            "comments": []
+          }
+        ]
+      },
+      {
+        "sectionId": "s3c4d5e6-f7g8-9101-1121-314151617182",
+        "sectionTitle": "Deployment & DevOps",
+        "sectionDescription": "Push your masterpiece to the world with confidence.",
+        "chapters": [
+          {
+            "chapterId": "ch7g8h9i0-j1k2-l3m4-n5o6-p7q8r9s0t1u2",
+            "type": "Video",
+            "title": "Deploying with Vercel",
+            "content": "https://example.com/videos/deploy-vercel.mp4",
+            "video": "https://example.com/videos/deploy-vercel.mp4",
+            "comments": []
+          },
+          {
+            "chapterId": "ch8h9i0j1-k2l3-m4n5-o6p7-q8r9s0t1u2v3",
+            "type": "Text",
+            "title": "CI/CD Basics",
+            "content": "Continuous integration and deployment is like having an army of robots double-check your code before shipping it out.",
+            "comments": []
+          },
+          {
+            "chapterId": "ch9i0j1k2-l3m4-n5o6-p7q8-r9s0t1u2v3w4",
+            "type": "Quiz",
+            "title": "DevOps Quiz",
+            "content": "1. What is CI/CD?\n2. What are some common build tools?\n3. How do you handle environment variables in production?",
+            "comments": []
+          }
+        ]
+      }
+    ]
   }
 ]

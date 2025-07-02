@@ -26,10 +26,12 @@ const customBaseQuery = async (
 
     if (result.error) {
       const errorData = result.error.data;
-      const errorMessage = errorData?.message || result.error.status?.toString() || "An error occurred";
+      const errorMessage =
+        errorData?.message ||
+        result.error.status?.toString() ||
+        "An error occurred";
       toast.error(`Error: ${errorMessage}`);
     }
-    
 
     const isMutationRequest =
       (args as FetchArgs).method && (args as FetchArgs).method !== "GET";
@@ -39,14 +41,15 @@ const customBaseQuery = async (
       if (successMessage) toast.success(successMessage);
     }
 
-    if (result.data) {
+    // Only unwrap result.data.data if it actually exists
+    if (result.data && result.data.data !== undefined) {
       result.data = result.data.data;
-    } else if (
-      result.error?.status === 204 ||
-      result.meta?.response?.status === 24
-    ) {
+    }
+
+    if (result.error?.status === 204 || result.meta?.response?.status === 204) {
       return { data: null };
     }
+
     return result;
   } catch (error: unknown) {
     let errorMessage =
@@ -54,6 +57,7 @@ const customBaseQuery = async (
     return { error: { status: "FETCH_ERROR", error: errorMessage } };
   }
 };
+
 export const api = createApi({
   baseQuery: customBaseQuery,
   reducerPath: "api",
@@ -88,10 +92,11 @@ export const api = createApi({
       providesTags: (result, error, id) => [{ type: "Courses", id }],
     }),
 
-    createCourse: build.mutation<Course, 
-    { teacherId: string; teacherName: string }
+    createCourse: build.mutation<
+      Course,
+      { teacherId: string; teacherName: string }
     >({
-      query:(body) => ({
+      query: (body) => ({
         url: `courses`,
         method: "POST",
         body,
@@ -99,10 +104,11 @@ export const api = createApi({
       invalidatesTags: ["Courses"],
     }),
 
-    updateCourse: build.mutation<Course, 
-    { courseId: string; formData: FormData }
+    updateCourse: build.mutation<
+      Course,
+      { courseId: string; formData: FormData }
     >({
-      query:({courseId, formData}) => ({
+      query: ({ courseId, formData }) => ({
         url: `courses/${courseId}`,
         method: "PUT",
         body: formData,
@@ -112,11 +118,8 @@ export const api = createApi({
       ],
     }),
 
-    deleteCourse: build.mutation<
-    { message: string },
-    string
-    >({
-      query:(courseId) => ({
+    deleteCourse: build.mutation<{ message: string }, string>({
+      query: (courseId) => ({
         url: `courses/${courseId}`,
         method: "DELETE",
       }),
@@ -127,7 +130,23 @@ export const api = createApi({
      * Transactions Endpoints
      */
     getTransactions: build.query<Transaction[], string>({
-      query: (userId) => `transactions?userId=${userId}`
+      query: (userId) => `transactions?userId=${userId}`,
+    }),
+
+    getTeacherEarningsBreakdown: build.query<
+      {
+        breakdown: {
+          courseId: string;
+          title: string;
+          enrollCount: number;
+          earnings: number;
+        }[];
+        totalEarnings: number;
+        currency: string;
+      },
+      string
+    >({
+      query: (teacherId) => `teachers/${teacherId}/earnings/breakdown`,
     }),
 
     createStripePaymentIntent: build.mutation<
@@ -142,12 +161,12 @@ export const api = createApi({
     }),
 
     createTransaction: build.mutation<Transaction, Partial<Transaction>>({
-      query:(transaction) => ({
+      query: (transaction) => ({
         url: "transactions",
         method: "POST",
-        body: transaction
-      })
-    })
+        body: transaction,
+      }),
+    }),
   }),
 });
 
@@ -159,6 +178,7 @@ export const {
   useGetCoursesQuery,
   useGetCourseQuery,
   useGetTransactionsQuery,
+  useGetTeacherEarningsBreakdownQuery,
   useCreateTransactionMutation,
   useCreateStripePaymentIntentMutation,
 } = api;

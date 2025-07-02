@@ -12,6 +12,7 @@ import http from 'http'; // Added for explicit HTTP/1.1 server
 import courseRoutes from './routes/courseRoutes';
 import userClerkRoutes from './routes/userClerkRoutes';
 import transactionRoutes from './routes/transactionRoutes';
+import teacherRoutes from './routes/teacherRoutes';
 
 // CONFIGURATION
 dotenv.config();
@@ -50,12 +51,13 @@ app.use(clerkMiddleware());
 
 // ROUTES
 app.get('/', (req, res) => {
-    res.send('Hello, world!');
+    res.send('🚀 LMS API up and running!');
 });
 
 app.use("/courses", courseRoutes);
 app.use("/users/clerk", requireAuth(), userClerkRoutes);
 app.use('/transactions', requireAuth(), transactionRoutes);
+app.use('/teachers', teacherRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -64,8 +66,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // SERVER SETUP
-const port = process.env.PORT || 3000; // Changed from 'port' to 'PORT' (standard)
-const server = http.createServer(app); // Explicit HTTP/1.1 server
+const port = process.env.PORT || 3000;
+const server = http.createServer(app);
 
 if (!isProduction) {
     server.listen(port, () => {
