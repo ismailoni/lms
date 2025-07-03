@@ -97,7 +97,7 @@ export const api = createApi({
       { teacherId: string; teacherName: string }
     >({
       query: (body) => ({
-        url: `courses`,
+        url: `/courses`,
         method: "POST",
         body,
       }),

@@ -83,7 +83,7 @@ export const createCourse = async (
       image: "",
       price: 0,
       level: "Beginner",
-      status: "draft",
+      status: "Draft",
       sections: [],
       enrollments: [],
     });

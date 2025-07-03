@@ -2,6 +2,7 @@
 
 import Header from '@/components/Header';
 import Loading from '@/components/Loading';
+import TeacherCourseCard from '@/components/TeacherCourseCard';
 import Toolbar from '@/components/Toolbar';
 import { Button } from '@/components/ui/button';
 import { useCreateCourseMutation, useDeleteCourseMutation, useGetCoursesQuery } from '@/state/api';
@@ -87,6 +88,17 @@ const Courses = () => {
             onCategoryChange={setSelectedCategory}
         />
 
+        <div className='teacher-courses__grid'>
+            {filteredCourses.map((course) => (
+                <TeacherCourseCard
+                    key={course.courseId}
+                    course={course}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isOwner={course.teacherId === user?.id}   
+                />
+            ))}
+        </div>
     </div>
   )
 }
