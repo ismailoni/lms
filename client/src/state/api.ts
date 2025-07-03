@@ -109,7 +109,7 @@ export const api = createApi({
       { courseId: string; formData: FormData }
     >({
       query: ({ courseId, formData }) => ({
-        url: `courses/${courseId}`,
+        url: `/courses/${courseId}`,
         method: "PUT",
         body: formData,
       }),

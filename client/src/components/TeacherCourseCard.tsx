@@ -32,7 +32,7 @@ const TeacherCourseCard = ({
       </CardHeader>
 
       <CardContent className="course-card-teacher__content">
-        <div className=" flex flex-col">
+        <div className="flex flex-col">
           <CardTitle className="course-card-teacher__title">
             {course.title}
           </CardTitle>
@@ -55,7 +55,7 @@ const TeacherCourseCard = ({
             </span>
           </p>
           {course.enrollments && (
-            <p className="ml-1 mt-1 inline-block text-secondary bg-secondary/10 text-sm ">
+            <p className="ml-1 mt-1 inline-block text-secondary bg-secondary/10 text-sm">
               <span className="font-bold text-white-100">
                 {course.enrollments.length}
               </span>{" "}
@@ -63,29 +63,25 @@ const TeacherCourseCard = ({
             </p>
           )}
         </div>
-        <div className="w-full flex gap-2 mt-3">
+        <div className="w-full flex flex-col sm:flex-row gap-2 mt-3">
           {isOwner ? (
             <>
-              <div>
-                <Button
-                  variant="outline"
-                  className="course-card-teacher__edit-button"
-                  onClick={() => onEdit(course)}
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit Course
-                </Button>
-              </div>
-              <div>
-                <Button
-                  variant="destructive"
-                  className="course-card-teacher__delete-button"
-                  onClick={() => onDelete(course)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Course
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                className="course-card-teacher__edit-button flex-1"
+                onClick={() => onEdit(course)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Course
+              </Button>
+              <Button
+                variant="destructive"
+                className="course-card-teacher__delete-button flex-1"
+                onClick={() => onDelete(course)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Course
+              </Button>
             </>
           ) : (
             <p className="text-sm text-gray-500 italic">View Only</p>
