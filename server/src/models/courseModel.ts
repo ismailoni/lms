@@ -79,6 +79,9 @@ const courseSchema = new Schema(
       type: String,
       required: true,
     },
+    teacherImage: {
+      type: String,
+    },
     title: {
       type: String,
       required: true,

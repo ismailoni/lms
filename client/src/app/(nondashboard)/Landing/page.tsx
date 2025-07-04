@@ -7,9 +7,7 @@ import { useCarousel } from "@/hooks/useCarousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetCoursesQuery } from "@/state/api";
 import CourseCardSearch from "@/components/CourseCardSearch";
-import { root } from "postcss";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 
 const LoadingSkeleton = () => {
   return (
@@ -46,12 +44,14 @@ const LoadingSkeleton = () => {
 const Landing = () => {
   
   const currentImage = useCarousel({ totalImages: 3 });
-  const { data: courses, isLoading, isError } = useGetCoursesQuery({});
+  const { data: courses, isLoading } = useGetCoursesQuery({});
 
   const router = useRouter();
   const handleCourseClick = (courseId: string) => {
-    router.push(`/search?id=${courseId}`);
-  }
+    router.push(`/search?id=${courseId}`, {
+      scroll: false,
+    });
+  };
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -78,7 +78,7 @@ const Landing = () => {
             Start your journey today.
           </p>
           <div className="landing__cta">
-            <Link href="/search">
+            <Link href="/search" scroll={false}>
               <div className="landing__cta-button">
                 <span>Search Courses</span>
               </div>

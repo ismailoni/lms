@@ -23,10 +23,9 @@ const Course = () => {
   } = useCourseProgressData();
   console.log("currentChapter.video:", currentChapter);
 
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<ReactPlayer>(null);
 
-  const handleProgress = (state: { played: number }) => {
-    const { played } = state;
+  const handleProgress = ({ played }: { played: number }) => {
     if (
       played >= 0.8 &&
       !hasMarkedComplete &&
@@ -79,11 +78,18 @@ const Course = () => {
             {currentChapter?.video ? (
               <ReactPlayer
                 ref={playerRef}
-                src={currentChapter.video as string}
+                url={currentChapter.video as string}
                 controls
                 width="100%"
                 height="100%"
-                onProgress={handleProgress as any}
+                onProgress={handleProgress}
+                config={{
+                  file: {
+                    attributes: {
+                      controlsList: "nodownload",
+                    },
+                  },
+                }}
               />
             ) : (
               <div className="course__no-video">

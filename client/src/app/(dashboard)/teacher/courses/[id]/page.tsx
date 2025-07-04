@@ -1,6 +1,6 @@
 "use client";
+
 import { CustomFormField } from "@/components/CustomFormField";
-import DroppableComponent from "@/components/Droppable";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -11,7 +11,11 @@ import {
   uploadAllVideos,
 } from "@/lib/utils";
 import { openSectionModal, setSections } from "@/state";
-import { useGetCourseQuery, useUpdateCourseMutation } from "@/state/api";
+import {
+  useGetCourseQuery,
+  useUpdateCourseMutation,
+  useGetUploadVideoUrlMutation,
+} from "@/state/api";
 import { useAppDispatch, useAppSelector } from "@/state/redux";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -20,6 +24,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import ChapterModal from "./ChapterModal";
 import SectionModal from "./SectionModal";
+import DroppableComponent from "@/components/Droppable";
 
 const CourseEditor = () => {
   const router = useRouter();
@@ -27,8 +32,7 @@ const CourseEditor = () => {
   const id = params.id as string;
   const { data: course, isLoading, refetch } = useGetCourseQuery(id);
   const [updateCourse] = useUpdateCourseMutation();
-
-  // Upload Video Functionality
+  const [getUploadVideoUrl] = useGetUploadVideoUrlMutation();
 
   const dispatch = useAppDispatch();
   const { sections } = useAppSelector((state) => state.global.courseEditor);
@@ -59,14 +63,18 @@ const CourseEditor = () => {
 
   const onSubmit = async (data: CourseFormData) => {
     try {
-      const formData = createCourseFormData(data, sections);
+      const updatedSections = await uploadAllVideos(
+        sections,
+        id,
+        getUploadVideoUrl
+      );
 
-      const updatedCourse = await updateCourse({
+      const formData = createCourseFormData(data, updatedSections);
+
+      await updateCourse({
         courseId: id,
         formData,
       }).unwrap();
-
-      // await uploadAllVideos(sections, updatedCourse.sections, id, uploadVideos);
 
       refetch();
     } catch (error) {
@@ -78,11 +86,11 @@ const CourseEditor = () => {
     <div>
       <div className="flex items-center gap-5 mb-5">
         <button
-          className="flex items-center border border-customgreys-dirtyGrey rounded-lg p-2 gap-2"
-          onClick={() => router.push("/teacher/courses")}
+          className="flex items-center border border-customgreys-dirtyGrey rounded-lg p-2 gap-2 cursor-pointer hover:bg-customgreys-dirtyGrey hover:text-white-100 text-customgreys-dirtyGrey"
+          onClick={() => router.push("/teacher/courses", { scroll: false })}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Courses
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Courses</span>
         </button>
       </div>
 
@@ -90,7 +98,7 @@ const CourseEditor = () => {
         <form onSubmit={methods.handleSubmit(onSubmit)}>
           <Header
             title="Course Setup"
-            subtitle="Complete all fields to set up your course."
+            subtitle="Complete all fields and save your course"
             rightElement={
               <div className="flex items-center space-x-4">
                 <CustomFormField
@@ -110,21 +118,21 @@ const CourseEditor = () => {
                   className="bg-primary-700 hover:bg-primary-600"
                 >
                   {methods.watch("courseStatus")
-                    ? "Update Course"
-                    : "Save as Draft"}
+                    ? "Update Published Course"
+                    : "Save Draft"}
                 </Button>
               </div>
             }
           />
 
-          <div className="flex justify-between md:flex-row flex-col gap-10 mt-5">
+          <div className="flex justify-between md:flex-row flex-col gap-10 mt-5 font-dm-sans">
             <div className="basis-1/2">
               <div className="space-y-4">
                 <CustomFormField
                   name="courseTitle"
                   label="Course Title"
                   type="text"
-                  placeholder="Enter course title"
+                  placeholder="Write course title here"
                   className="border-none"
                   initialValue={course?.title}
                 />
@@ -133,7 +141,7 @@ const CourseEditor = () => {
                   name="courseDescription"
                   label="Course Description"
                   type="textarea"
-                  placeholder="Enter course description"
+                  placeholder="Write course description here"
                   initialValue={course?.description}
                 />
 
@@ -141,6 +149,7 @@ const CourseEditor = () => {
                   name="courseCategory"
                   label="Course Category"
                   type="select"
+                  placeholder="Select category here"
                   options={[
                     { value: "technology", label: "Technology" },
                     { value: "science", label: "Science" },
@@ -158,7 +167,7 @@ const CourseEditor = () => {
                   label="Course Price"
                   type="number"
                   placeholder="0"
-                  initialValue={centsToDollars(course?.price)}
+                  initialValue={course?.price}
                 />
               </div>
             </div>
@@ -166,18 +175,20 @@ const CourseEditor = () => {
             <div className="bg-customgreys-darkGrey mt-4 md:mt-0 p-4 rounded-lg basis-1/2">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-2xl font-semibold text-secondary-foreground">
-                  Course Sections
+                  Sections
                 </h2>
+
                 <Button
                   type="button"
                   variant="outline"
+                  size="sm"
                   onClick={() =>
                     dispatch(openSectionModal({ sectionIndex: null }))
                   }
                   className="border-none text-primary-700 group"
                 >
-                  <Plus className="h-4 w-4 mr-1 text-primary-700 group-hover:text-white-100" />
-                  <span className="text-primary-700 group-hover:text-white-100">
+                  <Plus className="mr-1 h-4 w-4 text-primary-700 group-hover:white-100" />
+                  <span className="text-primary-700 group-hover:white-100">
                     Add Section
                   </span>
                 </Button>

@@ -16,7 +16,7 @@ export default function DroppableComponent() {
   const dispatch = useAppDispatch();
   const { sections } = useAppSelector((state) => state.global.courseEditor);
 
-  const handleSectionDragEnd = (result: any) => {
+  const handleSectionDragEnd = (result: import("@hello-pangea/dnd").DropResult) => {
     if (!result.destination) return;
 
     const startIndex = result.source.index;
@@ -28,7 +28,7 @@ export default function DroppableComponent() {
     dispatch(setSections(updatedSections));
   };
 
-  const handleChapterDragEnd = (result: any, sectionIndex: number) => {
+  const handleChapterDragEnd = (result: import("@hello-pangea/dnd").DropResult, sectionIndex: number) => {
     if (!result.destination) return;
 
     const startIndex = result.source.index;
@@ -74,7 +74,7 @@ export default function DroppableComponent() {
                     <SectionHeader
                       section={section}
                       sectionIndex={sectionIndex}
-                      dragHandleProps={draggableProvider.dragHandleProps}
+                      dragHandleProps={draggableProvider.dragHandleProps ?? {}}
                     />
 
                     <DragDropContext
@@ -150,7 +150,7 @@ const SectionHeader = ({
 }: {
   section: Section;
   sectionIndex: number;
-  dragHandleProps: any;
+  dragHandleProps: React.HTMLAttributes<HTMLDivElement>;
 }) => {
   const dispatch = useAppDispatch();
 
@@ -202,7 +202,7 @@ const ChapterItem = ({
   chapter: Chapter;
   chapterIndex: number;
   sectionIndex: number;
-  draggableProvider: any;
+  draggableProvider: import("@hello-pangea/dnd").DraggableProvided;
 }) => {
   const dispatch = useAppDispatch();
 

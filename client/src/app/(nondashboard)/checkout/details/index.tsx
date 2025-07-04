@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useCurrentCourse } from "@/hooks/useCurrentCourse";
 import { GuestFormData, guestSchema } from "@/lib/schemas";
-import { useGetCourseQuery } from "@/state/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
 import React from "react";

@@ -76,6 +76,7 @@ export const createCourse = async (
       courseId: uuidv4(),
       teacherId,
       teacherName,
+      teacherImage: "",
       title: "Untitled Course",
       description: "",
       category: "Uncategorized",

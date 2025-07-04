@@ -14,6 +14,8 @@ import userClerkRoutes from './routes/userClerkRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import teacherRoutes from './routes/teacherRoutes';
 import userCourseProgressRoutes from './routes/userCourseProgressRoutes';
+import Serverless from 'serverless-http';
+import seed from './seed/seedDynamodb';
 
 // CONFIGURATION
 dotenv.config();
@@ -83,5 +85,20 @@ if (isProduction) {
         console.log(`Production server running on port ${port}`);
     });
 }
+
+// aws project configuration
+const severlessApp = Serverless(app)
+export const handler = async (event: any, context: any) => {
+    if (event.action === 'seed') {
+        await seed();
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: 'Database seeded successfully' }),
+        };
+    } else {
+        return severlessApp(event, context);
+    }
+}
+
 
 export default server;

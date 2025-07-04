@@ -39,6 +39,7 @@ declare global {
     courseId: string;
     teacherId: string;
     teacherName: string;
+    teacherImage: string; // Optional, can be used for teacher profile image
     title: string;
     description?: string;
     category: string;

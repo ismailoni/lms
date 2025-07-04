@@ -1,14 +1,23 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { BaseQueryApi, FetchArgs } from "@reduxjs/toolkit/query";
-import { string } from "zod";
 import { User } from "@clerk/nextjs/server";
-import { Clerk } from "@clerk/clerk-js";
 import { toast } from "sonner";
+
+// Extend the Window interface to include Clerk
+declare global {
+  interface Window {
+    Clerk?: {
+      session?: {
+        getToken: () => Promise<string | undefined>;
+      };
+    };
+  }
+}
 
 const customBaseQuery = async (
   args: string | FetchArgs,
   api: BaseQueryApi,
-  extraOptions: any
+  extraOptions: Record<string, unknown> = {}
 ) => {
   const baseQuery = fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001/",
@@ -22,13 +31,20 @@ const customBaseQuery = async (
   });
 
   try {
-    const result: any = await baseQuery(args, api, extraOptions);
+    const result = await baseQuery(args, api, extraOptions);
 
     if (result.error) {
-      const errorData = result.error.data;
+      const errorData =
+        typeof result.error === "object" && result.error !== null && "data" in result.error
+          ? (result.error as { data?: unknown }).data
+          : undefined;
       const errorMessage =
-        errorData?.message ||
-        result.error.status?.toString() ||
+        (errorData && typeof errorData === "object" && "message" in errorData
+          ? (errorData as { message?: string }).message
+          : undefined) ||
+        (typeof result.error === "object" && result.error !== null && "status" in result.error
+          ? (result.error as { status?: unknown }).status?.toString()
+          : undefined) ||
         "An error occurred";
       toast.error(`Error: ${errorMessage}`);
     }
@@ -37,13 +53,21 @@ const customBaseQuery = async (
       (args as FetchArgs).method && (args as FetchArgs).method !== "GET";
 
     if (isMutationRequest) {
-      const successMessage = result.data?.message;
+      const successMessage =
+        result.data && typeof result.data === "object" && "message" in result.data
+          ? (result.data as { message?: string }).message
+          : undefined;
       if (successMessage) toast.success(successMessage);
     }
 
     // Only unwrap result.data.data if it actually exists
-    if (result.data && result.data.data !== undefined) {
-      result.data = result.data.data;
+    if (
+      result.data &&
+      typeof result.data === "object" &&
+      result.data !== null &&
+      "data" in result.data
+    ) {
+      result.data = (result.data as { data: unknown }).data;
     }
 
     if (result.error?.status === 204 || result.meta?.response?.status === 204) {
@@ -52,7 +76,7 @@ const customBaseQuery = async (
 
     return result;
   } catch (error: unknown) {
-    let errorMessage =
+    const errorMessage =
       error instanceof Error ? error.message : "An error occurred";
     return { error: { status: "FETCH_ERROR", error: errorMessage } };
   }
@@ -126,6 +150,23 @@ export const api = createApi({
       invalidatesTags: ["Courses"],
     }),
 
+    getUploadVideoUrl: build.mutation<
+      { uploadUrl: string; videoUrl: string },
+      {
+        courseId: string;
+        chapterId: string;
+        sectionId: string;
+        fileName: string;
+        fileType: string;
+      }
+    >({
+      query: ({ courseId, sectionId, chapterId, fileName, fileType }) => ({
+        url: `courses/${courseId}/sections/${sectionId}/chapters/${chapterId}/get-upload-url`,
+        method: "POST",
+        body: { fileName, fileType },
+      }),
+    }),
+
     /**
      * Transactions Endpoints
      */
@@ -177,8 +218,7 @@ export const api = createApi({
       UserCourseProgress,
       { userId: string; courseId: string }
     >({
-      query: ({ userId, courseId }) =>
-        `/${userId}/courses/${courseId}`,
+      query: ({ userId, courseId }) => `/${userId}/courses/${courseId}`,
       providesTags: ["UserCourseProgress"],
     }),
 
@@ -238,4 +278,5 @@ export const {
   useGetUserEnrolledCoursesQuery,
   useGetUserCourseProgressQuery,
   useUpdateUserCourseProgressMutation,
+  useGetUploadVideoUrlMutation,
 } = api;

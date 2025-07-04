@@ -30,6 +30,7 @@ import "filepond/dist/filepond.min.css";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
+import { Control } from "react-hook-form";
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
@@ -220,9 +221,10 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
     />
   );
 };
+
 interface MultiInputFieldProps {
   name: string;
-  control: any;
+  control: Control<FieldValues>;
   placeholder?: string;
   inputClassName?: string;
 }

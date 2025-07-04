@@ -24,9 +24,10 @@ lerna-debug.log*
 # Environment files
 # ──────────────────────────────────────────────────────────────────────────────
 .env
-.env.local
-.env.*.local
-.env.production
+client/.env.local
+client/.env.development
+client/.env.production
+server/.env
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Client (Next.js / CRA / Vite etc.)
@@ -54,6 +55,9 @@ server/build/
 # If using TypeScript
 server/*.tsbuildinfo
 
+server/shared-local-instances.db
+server/dynamodb-local-metadata.json
+shared-local-instances.db
 # ──────────────────────────────────────────────────────────────────────────────
 # Coverage reports
 # ──────────────────────────────────────────────────────────────────────────────
