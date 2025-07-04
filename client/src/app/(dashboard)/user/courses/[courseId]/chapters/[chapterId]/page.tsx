@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+// import { useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import ReactPlayer from "react-player";
+// import ReactPlayer from "react-player";
 import Loading from "@/components/Loading";
 import { useCourseProgressData } from "@/hooks/useCourseProgressData";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -17,10 +17,10 @@ const Course = () => {
     currentSection,
     currentChapter,
     isLoading,
-    isChapterCompleted,
-    updateChapterProgress,
-    hasMarkedComplete,
-    setHasMarkedComplete,
+    // isChapterCompleted,
+    // updateChapterProgress,
+    // hasMarkedComplete,
+    // setHasMarkedComplete,
   } = useCourseProgressData();
   console.log("currentChapter.video:", currentChapter);
 
