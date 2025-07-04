@@ -4,30 +4,18 @@ const teacherEarningsSchema = new Schema(
   {
     teacherId: {
       type: String,
-      hashKey: true,        // partition key
+      hashKey: true,
       required: true,
     },
     courseId: {
       type: String,
-      rangeKey: true,       // sort key, so one record per teacher+course
+      rangeKey: true,
       required: true,
     },
-    title: {
-      type: String,
-      required: true,
-    },
-    enrollCount: {
-      type: Number,
-      required: true,
-    },
-    earnings: {
-      type: Number,
-      required: true,
-    },
-    updatedAt: {
-      type: String,
-      required: true,
-    },
+    title: String,
+    enrollCount: Number,
+    earnings: Number,
+    updatedAt: String,
   },
   {
     timestamps: false,

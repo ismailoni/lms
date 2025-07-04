@@ -133,7 +133,7 @@ const config = {
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
   		fontFamily: {
-  			sans: ["var(--font-dm-sans)"]
+  			sans: ["var(--font-dm-sans)", "poppins"]
   		},
   		fontSize: {
   			xs: ["0.75rem", { lineHeight: "1rem" }],

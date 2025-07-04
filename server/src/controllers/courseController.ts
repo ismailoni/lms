@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Course from "../models/courseModel";
+import TeacherEarnings from "../models/teacherEarningsModel";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
 
@@ -11,9 +12,7 @@ export const listCourses = async (
   try {
     const courses =
       category && category !== "all"
-        ? await Course.scan("category")
-            .eq(category as string)
-            .exec()
+        ? await Course.scan("category").eq(category as string).exec()
         : await Course.scan().exec();
 
     res.status(200).json({
@@ -89,6 +88,17 @@ export const createCourse = async (
     });
     await newCourse.save();
 
+    // 💥 Create a TeacherEarnings record automatically
+    const newTeacherEarning = new TeacherEarnings({
+      teacherId: teacherId,
+      courseId: newCourse.courseId,
+      title: newCourse.title,
+      enrollCount: 0,
+      earnings: 0,
+      updatedAt: new Date().toISOString(),
+    });
+    await newTeacherEarning.save();
+
     res.status(200).json({
       success: true,
       message: "Course created successfully",
@@ -129,6 +139,7 @@ export const updateCourse = async (
       });
       return;
     }
+
     if (updateData.price) {
       const price = parseInt(updateData.price);
       if (isNaN(price) || price < 0) {
@@ -138,7 +149,7 @@ export const updateCourse = async (
         });
         return;
       }
-      updateData.price = price * 100;
+      updateData.price = price * 100; // Convert to cents if needed
     }
 
     if (updateData.sections) {
@@ -157,8 +168,23 @@ export const updateCourse = async (
       }));
     }
 
+    // Update course
     Object.assign(course, updateData);
     await course.save();
+
+    // Optionally update TeacherEarnings title if course title changed
+    if (updateData.title) {
+      const earningsRecord = await TeacherEarnings.get({
+        teacherId: course.teacherId,
+        courseId: course.courseId,
+      });
+
+      if (earningsRecord) {
+        earningsRecord.title = updateData.title;
+        earningsRecord.updatedAt = new Date().toISOString();
+        await earningsRecord.save();
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -200,7 +226,14 @@ export const deleteCourse = async (
       return;
     }
 
+    // Delete the course
     await Course.delete(courseId);
+
+    // Delete corresponding TeacherEarnings record
+    await TeacherEarnings.delete({
+      teacherId: course.teacherId,
+      courseId: course.courseId,
+    });
 
     res.status(200).json({
       success: true,

@@ -1,56 +1,117 @@
-// front-end/src/components/TeacherEarnings.tsx
-'use client';
+"use client";
 
-import React from "react";
 import Loading from "@/components/Loading";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatPrice } from "@/lib/utils";
-import { useGetTeacherEarningsBreakdownQuery } from "@/state/api";
+import { useGetTransactionsQuery } from "@/state/api";
 import { useUser } from "@clerk/nextjs";
+import React, { useState } from "react";
 
-const TeacherEarnings = () => {
+const UserBilling = () => {
+  const [paymentType, setPaymentType] = useState("all");
   const { user, isLoaded } = useUser();
-  const teacherId = user?.id || "";
+  const { data: transactions, isLoading: isLoadingTransactions } =
+    useGetTransactionsQuery(user?.id || "", {
+      skip: !isLoaded || !user,
+    });
 
-  const { data, isLoading, error } = useGetTeacherEarningsBreakdownQuery(teacherId, {
-    skip: !isLoaded || !teacherId,
-  });
+  const filteredData =
+    transactions?.filter((transaction) => {
+      const matchesTypes =
+        paymentType === "all" || transaction.paymentProvider === paymentType;
+      return matchesTypes;
+    }) || [];
 
   if (!isLoaded) return <Loading />;
-  if (!user) return <div>Please sign in to view your earnings</div>;
-  if (isLoading) return <Loading />;
-  if (error) return <div>Oops! Couldn’t load your earnings.</div>;
+  if (!user) return <div>Please sign in to view your billing information.</div>;
 
   return (
-    <div className="teacher-earnings">
-      <h2 className="mb-4 text-2xl font-semibold">Earnings by Course</h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Course</TableHead>
-            <TableHead>Enrolled Users</TableHead>
-            <TableHead>Earnings</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.breakdown.map(({ courseId, title, enrollCount, earnings }) => (
-            <TableRow key={courseId}>
-              <TableCell>{title}</TableCell>
-              <TableCell>{enrollCount}</TableCell>
-              <TableCell>{formatPrice(earnings)}</TableCell>
-            </TableRow>
-          ))}
+    <div className="billing">
+      <div className="billing__container">
+        <h2 className="billing__title">Payment History</h2>
+        <div className="billing__filters">
+          <Select value={paymentType} onValueChange={setPaymentType}>
+            <SelectTrigger className="billing__select">
+              <SelectValue placeholder="Payment Type" />
+            </SelectTrigger>
 
-          {/* Footer row for total earnings */}
-          <TableRow className="font-bold">
-            <TableCell>Total</TableCell>
-            <TableCell />
-            <TableCell>{formatPrice(data.totalEarnings)}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+            <SelectContent className="billing__select-content">
+              <SelectItem className="billing__select-item" value="all">
+                All Types
+              </SelectItem>
+              <SelectItem className="billing__select-item" value="stripe">
+                Stripe
+              </SelectItem>
+              <SelectItem className="billing__select-item" value="paypal">
+                Paypal
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="billing__grid">
+          {isLoadingTransactions ? (
+            <Loading />
+          ) : (
+            <Table className="billing__table">
+              <TableHeader className="billing__table-header">
+                <TableRow className="billing__table-header-row">
+                  <TableHead className="billing__table-cell">Date</TableHead>
+                  <TableHead className="billing__table-cell">Amount</TableHead>
+                  <TableHead className="billing__table-cell">
+                    Payment Method
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="billing__table-body">
+                {filteredData.length > 0 ? (
+                  filteredData.map((transaction) => (
+                    <TableRow
+                      className="billing__table-row"
+                      key={transaction.transactionId}
+                    >
+                      <TableCell className="billing__table-cell">
+                        {new Date(transaction.dateTime).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="billing__table-cell billing__amount">
+                        {formatPrice(transaction.amount)}
+                      </TableCell>
+                      <TableCell className="billing__table-cell">
+                        {transaction.paymentProvider}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow className="billing__table-row">
+                    <TableCell
+                      className="billing__table-cell text-center"
+                      colSpan={3}
+                    >
+                      No transactions to display
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default TeacherEarnings;
+export default UserBilling;

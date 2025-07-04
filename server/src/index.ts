@@ -13,6 +13,7 @@ import courseRoutes from './routes/courseRoutes';
 import userClerkRoutes from './routes/userClerkRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import teacherRoutes from './routes/teacherRoutes';
+import userCourseProgressRoutes from './routes/userCourseProgressRoutes';
 
 // CONFIGURATION
 dotenv.config();
@@ -58,6 +59,7 @@ app.use("/courses", courseRoutes);
 app.use("/users/clerk", requireAuth(), userClerkRoutes);
 app.use('/transactions', requireAuth(), transactionRoutes);
 app.use('/teachers', teacherRoutes);
+app.use('/', requireAuth(), userCourseProgressRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
