@@ -13,7 +13,6 @@ A modern, full-stack LMS built with React (frontend) and Node/Express + DynamoDB
 ```
 /client     ← React app (frontend)
 /server     ← Node.js/Express + DynamoDB (backend)
-/asset-download  ← Ignored folder (media/temp files)
 .gitignore
 README.md
 ```
@@ -103,14 +102,22 @@ Visit: [http://localhost:3000](http://localhost:3000)
 
 ## 📡 API Endpoints
 
-| Method | Route                | Description         |
-| ------ | -------------------- | ------------------- |
-| POST   | `/api/auth/register` | Register new user   |
-| POST   | `/api/auth/login`    | Login and get JWT   |
-| GET    | `/api/courses`       | Fetch all courses   |
-| POST   | `/api/courses`       | Create a new course |
-| PUT    | `/api/courses/:id`   | Update course by ID |
-| DELETE | `/api/courses/:id`   | Delete course by ID |
+| Method | Route                                        | Description                              |
+| ------ | -------------------------------------------- | ---------------------------------------- |
+| PUT    | `/users/clerk/:userId`                       | Update user                              |
+| GET    | `/courses`                                   | Fetch all courses (optional category)    |
+| GET    | `/courses/:id`                               | Get course by ID                         |
+| POST   | `/courses`                                   | Create a new course                      |
+| PUT    | `/courses/:courseId`                         | Update course by ID                      |
+| DELETE | `/courses/:courseId`                         | Delete course by ID                      |
+| GET    | `/transactions?userId=:userId`               | Get transactions for user                |
+| POST   | `/transactions`                              | Create a new transaction                 |
+| POST   | `/transactions/stripe/payment-intent`        | Create Stripe payment intent             |
+| GET    | `/teachers/:teacherId/earnings/breakdown`    | Get teacher earnings breakdown           |
+| GET    | `/:userId/enrolled-courses`                  | Get user's enrolled courses              |
+| GET    | `/:userId/courses/:courseId`                 | Get user's course progress               |
+| PUT    | `/:userId/courses/:courseId`                 | Update user's course progress            |
+
 
 ---
 
