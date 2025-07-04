@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import ReactPlayer from "react-player";
 import Loading from "@/components/Loading";
 import { useCourseProgressData } from "@/hooks/useCourseProgressData";
+import VideoPlayer from "@/components/VideoPlayer";
 
 const Course = () => {
   const {
@@ -23,25 +24,40 @@ const Course = () => {
   } = useCourseProgressData();
   console.log("currentChapter.video:", currentChapter);
 
-  const playerRef = useRef<ReactPlayer>(null);
+  // interface PlayerRef {
+  //   seekTo: (fraction: number, type?: 'seconds' | 'fraction') => void;
+  //   getInternalPlayer: () => HTMLVideoElement | null;
+  //   // Add other methods if needed
+  // }
 
-  const handleProgress = ({ played }: { played: number }) => {
-    if (
-      played >= 0.8 &&
-      !hasMarkedComplete &&
-      currentChapter &&
-      currentSection &&
-      userProgress?.sections &&
-      !isChapterCompleted()
-    ) {
-      setHasMarkedComplete(true);
-      updateChapterProgress(
-        currentSection.sectionId,
-        currentChapter.chapterId,
-        true
-      );
-    }
-  };
+  // type Player = typeof ReactPlayer; // The component instance type
+
+  // const playerRef = useRef<Player | null>(null);
+
+  // const setPlayerRef = (player: Player | null) => {
+  //   playerRef.current = player;
+  // };
+
+  
+
+
+  // const handleProgress = ({ played }: { played: number }) => {
+  //   if (
+  //     played >= 0.8 &&
+  //     !hasMarkedComplete &&
+  //     currentChapter &&
+  //     currentSection &&
+  //     userProgress?.sections &&
+  //     !isChapterCompleted()
+  //   ) {
+  //     setHasMarkedComplete(true);
+  //     updateChapterProgress(
+  //       currentSection.sectionId,
+  //       currentChapter.chapterId,
+  //       true
+  //     );
+  //   }
+  // };
 
   if (isLoading) return <Loading />;
   if (!user) return <div>Please sign in to view this course.</div>;
@@ -76,20 +92,8 @@ const Course = () => {
         <Card className="course__video">
           <CardContent className="course__video-container">
             {currentChapter?.video ? (
-              <ReactPlayer
-                ref={playerRef}
-                url={currentChapter.video as string}
-                controls
-                width="100%"
-                height="100%"
-                onProgress={handleProgress}
-                config={{
-                  file: {
-                    attributes: {
-                      controlsList: "nodownload",
-                    },
-                  },
-                }}
+              <VideoPlayer
+                src={currentChapter.video as string}
               />
             ) : (
               <div className="course__no-video">
