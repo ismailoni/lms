@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# OS files
+# ──────────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Node modules (both client & server)
+# ──────────────────────────────────────────────────────────────────────────────
+# ignores any node_modules folder in any subdirectory
+**/node_modules/
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Logs
+# ──────────────────────────────────────────────────────────────────────────────
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Environment files
+# ──────────────────────────────────────────────────────────────────────────────
+.env
+client/.env.local
+client/.env.development
+client/.env.production
+server/.env
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Client (Next.js / CRA / Vite etc.)
+# ──────────────────────────────────────────────────────────────────────────────
+# Next.js
+client/.next/
+client/out/
+# CRA
+client/build/
+# Vite
+client/dist/
+
+# Vercel / Netlify / Surge  
+client/.vercel/
+client/.netlify/
+client/.turbo/            # if you use Turborepo
+client/.cache/
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Server (Express / Nest / etc.)
+# ──────────────────────────────────────────────────────────────────────────────
+# Build output
+server/dist/
+server/build/
+# If using TypeScript
+server/*.tsbuildinfo
+
+server/shared-local-instances.db
+server/dynamodb-local-metadata.json
+shared-local-instance.db
+# ──────────────────────────────────────────────────────────────────────────────
+# Coverage reports
+# ──────────────────────────────────────────────────────────────────────────────
+coverage/
+**/coverage/
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Misc
+# ──────────────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+
+asset-download/
