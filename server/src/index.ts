@@ -21,6 +21,17 @@ import seed from './seed/seedDynamodb';
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+  dynamoose.aws.ddb.set(new dynamoose.aws.ddb.DynamoDB({
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    }
+  }));
+}
+
+
 
 if (!isProduction) {
     dynamoose.aws.ddb.local();
