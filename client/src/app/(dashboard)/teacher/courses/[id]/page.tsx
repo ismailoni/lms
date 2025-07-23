@@ -156,6 +156,17 @@ const CourseEditor = () => {
                   initialValue={course?.image}
                 />
 
+                {course?.image && !methods.watch("courseImage") && (
+                  <div className="mt-2">
+                    <p className="text-sm text-customgreys-dirtyGrey mb-2">Current Image:</p>
+                    <img 
+                      src={course.image} 
+                      alt="Current course image" 
+                      className="max-w-32 h-20 object-cover rounded border"
+                    />
+                  </div>
+                )}
+
                 <CustomFormField
                   name="courseCategory"
                   label="Course Category"
