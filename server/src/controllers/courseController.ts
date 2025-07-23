@@ -3,6 +3,7 @@ import Course from "../models/courseModel";
 import TeacherEarnings from "../models/teacherEarningsModel";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
+import cloudinary from "../utils/cloudinary";
 
 export const listCourses = async (
   req: Request,
@@ -139,6 +140,65 @@ export const updateCourse = async (
         message: "You are not authorized to update this course",
       });
       return;
+    }
+
+    // Handle image upload to Cloudinary
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload_stream(
+          {
+            resource_type: "image",
+            folder: "course-images",
+            transformation: [
+              { width: 1280, height: 720, crop: "fit" },
+              { quality: "auto", fetch_format: "auto" }
+            ],
+          },
+          (error, result) => {
+            if (error) {
+              console.error("Cloudinary upload error:", error);
+              throw error;
+            }
+            return result;
+          }
+        );
+
+        // Convert buffer to stream
+        const uploadPromise = new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            {
+              resource_type: "image",
+              folder: "course-images",
+              transformation: [
+                { width: 1280, height: 720, crop: "fit" },
+                { quality: "auto", fetch_format: "auto" }
+              ],
+            },
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            }
+          ).end(req.file!.buffer);
+        });
+
+        const uploadResult = await uploadPromise as any;
+        updateData.image = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Error uploading image to Cloudinary:", error);
+        res.status(500).json({
+          success: false,
+          message: "Error uploading image",
+          error: (error as Error).message,
+        });
+        return;
+      }
+    } else if (updateData.imageUrl) {
+      // If imageUrl is provided (existing image), keep it
+      updateData.image = updateData.imageUrl;
+      delete updateData.imageUrl;
     }
 
     if (updateData.price) {
