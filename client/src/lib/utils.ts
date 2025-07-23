@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import * as z from "zod";
 // import { api } from "../state/api";
 import { toast } from "sonner";
+import { CourseFormData } from "./schemas";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -298,6 +299,13 @@ export const createCourseFormData = (
   formData.append("category", data.courseCategory);
   formData.append("price", data.coursePrice.toString());
   formData.append("status", data.courseStatus ? "Published" : "Draft");
+
+  // Handle image upload
+  if (data.courseImage instanceof File) {
+    formData.append("image", data.courseImage);
+  } else if (typeof data.courseImage === "string" && data.courseImage) {
+    formData.append("image", data.courseImage);
+  }
 
   const sectionsWithVideos = sections.map((section) => ({
     ...section,
