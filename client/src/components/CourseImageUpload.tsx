@@ -51,7 +51,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
       }
 
       // Check image dimensions
-      const img = new Image();
+      const img = document.createElement('img');
       img.onload = () => {
         const { width, height } = img;
         const aspectRatio = width / height;
