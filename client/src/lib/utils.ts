@@ -299,6 +299,11 @@ export const createCourseFormData = (
   formData.append("price", data.coursePrice.toString());
   formData.append("status", data.courseStatus ? "Published" : "Draft");
 
+  // Handle course image upload
+  if (data.courseImage instanceof File) {
+    formData.append("image", data.courseImage);
+  }
+
   const sectionsWithVideos = sections.map((section) => ({
     ...section,
     chapters: section.chapters.map((chapter) => ({

@@ -58,6 +58,9 @@ server/*.tsbuildinfo
 server/shared-local-instances.db
 server/dynamodb-local-metadata.json
 shared-local-instance.db
+
+# Uploaded files
+server/uploads/
 # ──────────────────────────────────────────────────────────────────────────────
 # Coverage reports
 # ──────────────────────────────────────────────────────────────────────────────

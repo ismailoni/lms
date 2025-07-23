@@ -130,8 +130,12 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
           </div>
         );
       case "file":
+        const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
         const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/ogg"];
-        const acceptedFileTypes = accept ? [accept] : ACCEPTED_VIDEO_TYPES;
+        
+        const acceptedFileTypes = accept?.includes("image") 
+          ? ACCEPTED_IMAGE_TYPES 
+          : accept ? [accept] : ACCEPTED_VIDEO_TYPES;
 
         return (
           <FilePond

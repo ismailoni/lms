@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import * as dynamoose from 'dynamoose';
 import { clerkMiddleware, createClerkClient, requireAuth } from '@clerk/express';
 import http from 'http'; // Added for explicit HTTP/1.1 server
+import path from 'path';
 
 // ROUTE IMPORTS 
 import courseRoutes from './routes/courseRoutes';
@@ -62,6 +63,9 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(clerkMiddleware());
+
+// Serve static files for uploaded images
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ROUTES
 app.get('/', (req, res) => {

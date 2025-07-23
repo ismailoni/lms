@@ -3,6 +3,7 @@ import Course from "../models/courseModel";
 import TeacherEarnings from "../models/teacherEarningsModel";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
+import { handleImageUpload } from "../utils/utils";
 
 export const listCourses = async (
   req: Request,
@@ -139,6 +140,22 @@ export const updateCourse = async (
         message: "You are not authorized to update this course",
       });
       return;
+    }
+
+    // Handle image upload if a file is provided
+    if (req.file) {
+      try {
+        const imageUrl = await handleImageUpload(req.file, courseId);
+        updateData.image = imageUrl;
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to upload image",
+          error: (error as Error).message,
+        });
+        return;
+      }
     }
 
     if (updateData.price) {

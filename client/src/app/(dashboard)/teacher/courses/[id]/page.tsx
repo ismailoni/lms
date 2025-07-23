@@ -45,6 +45,7 @@ const CourseEditor = () => {
       courseCategory: "",
       coursePrice: "0",
       courseStatus: false,
+      courseImage: undefined,
     },
   });
 
@@ -56,6 +57,7 @@ const CourseEditor = () => {
         courseCategory: course.category,
         coursePrice: centsToDollars(course.price),
         courseStatus: course.status === "Published",
+        courseImage: course.image || undefined,
       });
       dispatch(setSections(course.sections || []));
     }
@@ -169,6 +171,25 @@ const CourseEditor = () => {
                   placeholder="0"
                   initialValue={course?.price}
                 />
+
+                <CustomFormField
+                  name="courseImage"
+                  label="Course Image"
+                  type="file"
+                  accept="image/*"
+                  placeholder="Upload course image"
+                />
+
+                {course?.image && (
+                  <div className="mt-2">
+                    <p className="text-customgreys-dirtyGrey text-sm mb-2">Current Image:</p>
+                    <img 
+                      src={course.image} 
+                      alt="Course preview" 
+                      className="w-32 h-32 object-cover rounded-lg border border-customgreys-dirtyGrey"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

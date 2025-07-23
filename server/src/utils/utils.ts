@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 
 export const updateCourseVideoInfo = (
   course: any,
@@ -18,6 +19,28 @@ export const updateCourseVideoInfo = (
 
   chapter.video = videoUrl;
   chapter.type = "Video";
+};
+
+export const handleImageUpload = async (
+  file: Express.Multer.File,
+  courseId: string
+): Promise<string> => {
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), "uploads", "course-images");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Generate unique filename
+  const fileExtension = path.extname(file.originalname);
+  const fileName = `${courseId}-${Date.now()}${fileExtension}`;
+  const filePath = path.join(uploadsDir, fileName);
+
+  // Save file to disk
+  fs.writeFileSync(filePath, file.buffer);
+
+  // Return URL path for the image
+  return `/uploads/course-images/${fileName}`;
 };
 
 export const validateUploadedFiles = (files: any) => {
