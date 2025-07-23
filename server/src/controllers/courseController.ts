@@ -169,6 +169,13 @@ export const updateCourse = async (
       }));
     }
 
+    // Handle image upload
+    if (req.file) {
+      // For now, we'll store the image as base64 or file path
+      // In a production environment, you'd upload to S3/CloudFront and store the URL
+      updateData.image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    }
+
     // Update course
     Object.assign(course, updateData);
     await course.save();
