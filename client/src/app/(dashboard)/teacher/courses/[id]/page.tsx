@@ -1,6 +1,7 @@
 "use client";
 
 import { CustomFormField } from "@/components/CustomFormField";
+import { CourseImageUpload } from "@/components/CourseImageUpload";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -45,6 +46,7 @@ const CourseEditor = () => {
       courseCategory: "",
       coursePrice: "0",
       courseStatus: false,
+      courseImage: undefined,
     },
   });
 
@@ -56,6 +58,7 @@ const CourseEditor = () => {
         courseCategory: course.category,
         coursePrice: centsToDollars(course.price),
         courseStatus: course.status === "Published",
+        courseImage: course.image,
       });
       dispatch(setSections(course.sections || []));
     }
@@ -135,6 +138,13 @@ const CourseEditor = () => {
                   placeholder="Write course title here"
                   className="border-none"
                   initialValue={course?.title}
+                />
+
+                <CourseImageUpload
+                  name="courseImage"
+                  label="Course Thumbnail"
+                  currentImageUrl={course?.image}
+                  className="border-none"
                 />
 
                 <CustomFormField
