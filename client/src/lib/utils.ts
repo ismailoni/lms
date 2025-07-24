@@ -320,88 +320,34 @@ export const createCourseFormData = (
 };
 
 export const uploadAllVideos = async (
-  localSections: Section[],
-  courseId: string,
-  getUploadVideoUrl: (params: {
-    courseId: string;
-    sectionId: string;
-    chapterId: string;
-    fileName: string;
-    fileType: string;
-  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string }> }
+  localSections: Section[]
 ) => {
   const updatedSections = localSections.map((section) => ({
     ...section,
     chapters: section.chapters.map((chapter) => ({
       ...chapter,
+      // Clear video files since there's no upload endpoint available
+      video: chapter.video instanceof File ? undefined : chapter.video,
     })),
   }));
 
-  for (let i = 0; i < updatedSections.length; i++) {
-    for (let j = 0; j < updatedSections[i].chapters.length; j++) {
-      const chapter = updatedSections[i].chapters[j];
-      if (chapter.video instanceof File && chapter.video.type === "video/mp4") {
-        try {
-          const updatedChapter = await uploadVideo(
-            chapter,
-            courseId,
-            updatedSections[i].sectionId,
-            getUploadVideoUrl
-          );
-          updatedSections[i].chapters[j] = updatedChapter;
-        } catch (error) {
-          console.error(
-            `Failed to upload video for chapter ${chapter.chapterId}:`,
-            error
-          );
-        }
+  // Check if any videos were attempted to be uploaded
+  let hasVideoFiles = false;
+  for (const section of localSections) {
+    for (const chapter of section.chapters) {
+      if (chapter.video instanceof File) {
+        hasVideoFiles = true;
+        break;
       }
     }
+    if (hasVideoFiles) break;
+  }
+
+  if (hasVideoFiles) {
+    toast.error("Video upload functionality is not available. Videos have been excluded from the course update.");
   }
 
   return updatedSections;
 };
 
-async function uploadVideo(
-  chapter: Chapter,
-  courseId: string,
-  sectionId: string,
-  getUploadVideoUrl: (params: {
-    courseId: string;
-    sectionId: string;
-    chapterId: string;
-    fileName: string;
-    fileType: string;
-  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string }> }
-) {
-  const file = chapter.video as File;
 
-  try {
-    const { uploadUrl, videoUrl } = await getUploadVideoUrl({
-      courseId,
-      sectionId,
-      chapterId: chapter.chapterId,
-      fileName: file.name,
-      fileType: file.type,
-    }).unwrap();
-
-    await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type,
-      },
-      body: file,
-    });
-    toast.success(
-      `Video uploaded successfully for chapter ${chapter.chapterId}`
-    );
-
-    return { ...chapter, video: videoUrl };
-  } catch (error) {
-    console.error(
-      `Failed to upload video for chapter ${chapter.chapterId}:`,
-      error
-    );
-    throw error;
-  }
-}
