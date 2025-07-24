@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import * as dynamoose from 'dynamoose';
 import { clerkMiddleware, createClerkClient, requireAuth } from '@clerk/express';
 import http from 'http'; // Added for explicit HTTP/1.1 server
 
@@ -15,27 +14,15 @@ import transactionRoutes from './routes/transactionRoutes';
 import teacherRoutes from './routes/teacherRoutes';
 import userCourseProgressRoutes from './routes/userCourseProgressRoutes';
 import Serverless from 'serverless-http';
-import seed from './seed/seedDynamodb';
+import seedPostgreSQL from './seed/seedPostgreSQL';
 
 // CONFIGURATION
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
-if (isProduction) {
-  dynamoose.aws.ddb.set(new dynamoose.aws.ddb.DynamoDB({
-    region: process.env.AWS_REGION,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    }
-  }));
-}
 
-
-
-if (!isProduction) {
-    dynamoose.aws.ddb.local();
-}
+// Initialize PostgreSQL connection
+import db from './utils/database';
 
 export const clerkClient = createClerkClient({
     secretKey: process.env.CLERK_SECRET_KEY
@@ -101,7 +88,7 @@ if (isProduction) {
 const severlessApp = Serverless(app)
 export const handler = async (event: any, context: any) => {
     if (event.action === 'seed') {
-        await seed();
+        await seedPostgreSQL();
         return {
             statusCode: 200,
             body: JSON.stringify({ message: 'Database seeded successfully' }),
