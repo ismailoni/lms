@@ -58,6 +58,11 @@ server/*.tsbuildinfo
 server/shared-local-instances.db
 server/dynamodb-local-metadata.json
 shared-local-instance.db
+
+# PostgreSQL
+server/*.sql
+server/pg_dump*
+server/.pgpass
 # ──────────────────────────────────────────────────────────────────────────────
 # Coverage reports
 # ──────────────────────────────────────────────────────────────────────────────
