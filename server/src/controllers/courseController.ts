@@ -297,3 +297,88 @@ export const deleteCourse = async (
     });
   }
 };
+
+export const getUploadVideoUrl = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { courseId, sectionId, chapterId } = req.params;
+  const { fileName, fileType } = req.body;
+  const { userId } = getAuth(req);
+
+  try {
+    // Verify that the user owns the course
+    const course = await CourseModel.findById(courseId);
+    
+    if (!course) {
+      res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+      return;
+    }
+
+    if (course.teacherId !== userId) {
+      res.status(403).json({
+        success: false,
+        message: "You are not authorized to upload videos for this course",
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!fileType.startsWith('video/')) {
+      res.status(400).json({
+        success: false,
+        message: "Only video files are allowed",
+      });
+      return;
+    }
+
+    // Generate unique filename for video
+    const uniqueFileName = `videos/${courseId}/${sectionId}/${chapterId}/${fileName}`;
+
+    // Generate Cloudinary signed upload parameters
+    const timestamp = Math.round((new Date()).getTime() / 1000);
+    const uploadParams = {
+      timestamp,
+      public_id: uniqueFileName,
+      resource_type: 'video',
+      folder: 'course-videos',
+    };
+
+    const signature = cloudinary.utils.api_sign_request(
+      uploadParams,
+      process.env.CLOUDINARY_API_SECRET!
+    );
+
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload`;
+    
+    // The final video URL after upload
+    const videoUrl = cloudinary.url(uniqueFileName, {
+      resource_type: 'video',
+      type: 'upload',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Video upload URL generated successfully",
+      data: {
+        uploadUrl,
+        videoUrl,
+        uploadParams: {
+          ...uploadParams,
+          api_key: process.env.CLOUDINARY_API_KEY,
+          signature,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error generating video upload URL:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error generating video upload URL",
+      error: (error as Error).message,
+    });
+  }
+};

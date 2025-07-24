@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import * as z from "zod";
 // import { api } from "../state/api";
-import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -320,34 +320,100 @@ export const createCourseFormData = (
 };
 
 export const uploadAllVideos = async (
-  localSections: Section[]
+  localSections: Section[],
+  courseId: string,
+  getUploadVideoUrl: (params: {
+    courseId: string;
+    sectionId: string;
+    chapterId: string;
+    fileName: string;
+    fileType: string;
+  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> }> }
 ) => {
   const updatedSections = localSections.map((section) => ({
     ...section,
     chapters: section.chapters.map((chapter) => ({
       ...chapter,
-      // Clear video files since there's no upload endpoint available
-      video: chapter.video instanceof File ? undefined : chapter.video,
     })),
   }));
 
-  // Check if any videos were attempted to be uploaded
-  let hasVideoFiles = false;
-  for (const section of localSections) {
-    for (const chapter of section.chapters) {
-      if (chapter.video instanceof File) {
-        hasVideoFiles = true;
-        break;
+  for (let i = 0; i < updatedSections.length; i++) {
+    for (let j = 0; j < updatedSections[i].chapters.length; j++) {
+      const chapter = updatedSections[i].chapters[j];
+      if (chapter.video instanceof File && chapter.video.type === "video/mp4") {
+        try {
+          const updatedChapter = await uploadVideo(
+            chapter,
+            courseId,
+            updatedSections[i].sectionId,
+            getUploadVideoUrl
+          );
+          updatedSections[i].chapters[j] = updatedChapter;
+        } catch (error) {
+          console.error(
+            `Failed to upload video for chapter ${chapter.chapterId}:`,
+            error
+          );
+        }
       }
     }
-    if (hasVideoFiles) break;
-  }
-
-  if (hasVideoFiles) {
-    toast.error("Video upload functionality is not available. Videos have been excluded from the course update.");
   }
 
   return updatedSections;
 };
+
+async function uploadVideo(
+  chapter: Chapter,
+  courseId: string,
+  sectionId: string,
+  getUploadVideoUrl: (params: {
+    courseId: string;
+    sectionId: string;
+    chapterId: string;
+    fileName: string;
+    fileType: string;
+  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> }> }
+) {
+  if (!(chapter.video instanceof File)) {
+    return chapter;
+  }
+
+  const uniqueVideoName = `${uuidv4()}_${chapter.video.name}`;
+
+  try {
+    const { uploadUrl, videoUrl, uploadParams } = await getUploadVideoUrl({
+      courseId,
+      sectionId,
+      chapterId: chapter.chapterId,
+      fileName: uniqueVideoName,
+      fileType: chapter.video.type,
+    }).unwrap();
+
+    // Create FormData for Cloudinary upload
+    const formData = new FormData();
+    
+    // Add all upload parameters
+    Object.keys(uploadParams).forEach(key => {
+      formData.append(key, uploadParams[key]);
+    });
+    
+    // Add the video file
+    formData.append('file', chapter.video);
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+    }
+
+    return { ...chapter, video: videoUrl };
+  } catch (error) {
+    console.error(`Failed to upload video for chapter ${chapter.chapterId}:`, error);
+    throw error;
+  }
+}
 
 
