@@ -151,7 +151,7 @@ export const api = createApi({
     }),
 
     getUploadVideoUrl: build.mutation<
-      { uploadUrl: string; videoUrl: string },
+      { uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> },
       {
         courseId: string;
         chapterId: string;
@@ -166,6 +166,8 @@ export const api = createApi({
         body: { fileName, fileType },
       }),
     }),
+
+
 
     /**
      * Transactions Endpoints
@@ -271,6 +273,7 @@ export const {
   useDeleteCourseMutation,
   useGetCoursesQuery,
   useGetCourseQuery,
+  useGetUploadVideoUrlMutation,
   useGetTransactionsQuery,
   useGetTeacherEarningsBreakdownQuery,
   useCreateTransactionMutation,
@@ -278,5 +281,4 @@ export const {
   useGetUserEnrolledCoursesQuery,
   useGetUserCourseProgressQuery,
   useUpdateUserCourseProgressMutation,
-  useGetUploadVideoUrlMutation,
 } = api;

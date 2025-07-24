@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import * as z from "zod";
 // import { api } from "../state/api";
-import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -328,7 +328,7 @@ export const uploadAllVideos = async (
     chapterId: string;
     fileName: string;
     fileType: string;
-  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string }> }
+  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> }> }
 ) => {
   const updatedSections = localSections.map((section) => ({
     ...section,
@@ -372,36 +372,48 @@ async function uploadVideo(
     chapterId: string;
     fileName: string;
     fileType: string;
-  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string }> }
+  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> }> }
 ) {
-  const file = chapter.video as File;
+  if (!(chapter.video instanceof File)) {
+    return chapter;
+  }
+
+  const uniqueVideoName = `${uuidv4()}_${chapter.video.name}`;
 
   try {
-    const { uploadUrl, videoUrl } = await getUploadVideoUrl({
+    const { uploadUrl, videoUrl, uploadParams } = await getUploadVideoUrl({
       courseId,
       sectionId,
       chapterId: chapter.chapterId,
-      fileName: file.name,
-      fileType: file.type,
+      fileName: uniqueVideoName,
+      fileType: chapter.video.type,
     }).unwrap();
 
-    await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type,
-      },
-      body: file,
+    // Create FormData for Cloudinary upload
+    const formData = new FormData();
+    
+    // Add all upload parameters
+    Object.keys(uploadParams).forEach(key => {
+      formData.append(key, uploadParams[key]);
     });
-    toast.success(
-      `Video uploaded successfully for chapter ${chapter.chapterId}`
-    );
+    
+    // Add the video file
+    formData.append('file', chapter.video);
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+    }
 
     return { ...chapter, video: videoUrl };
   } catch (error) {
-    console.error(
-      `Failed to upload video for chapter ${chapter.chapterId}:`,
-      error
-    );
+    console.error(`Failed to upload video for chapter ${chapter.chapterId}:`, error);
     throw error;
   }
 }
+
+
