@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import Course from "../models/courseModel";
-import TeacherEarnings from "../models/teacherEarningsModel";
+import CourseModel from "../models/prisma/courseModel";
+import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
 import cloudinary from "../utils/cloudinary";
@@ -11,10 +11,7 @@ export const listCourses = async (
 ): Promise<void> => {
   const { category } = req.query;
   try {
-    const courses =
-      category && category !== "all"
-        ? await Course.scan("category").eq(category as string).exec()
-        : await Course.scan().exec();
+    const courses = await CourseModel.findAll(category as string);
 
     res.status(200).json({
       success: true,
@@ -34,7 +31,7 @@ export const getCourse = async (req: Request, res: Response): Promise<void> => {
   const { courseId } = req.params;
 
   try {
-    const course = await Course.get(courseId);
+    const course = await CourseModel.findById(courseId);
 
     if (!course) {
       res.status(404).json({
@@ -73,8 +70,7 @@ export const createCourse = async (
       return;
     }
 
-    const newCourse = new Course({
-      courseId: uuidv4(),
+    const newCourse = await CourseModel.create({
       teacherId,
       teacherName,
       teacherImage: "",
@@ -85,13 +81,10 @@ export const createCourse = async (
       price: 0,
       level: "Beginner",
       status: "Draft",
-      sections: [],
-      enrollments: [],
     });
-    await newCourse.save();
 
     // 💥 Create a TeacherEarnings record automatically
-    const newTeacherEarning = new TeacherEarnings({
+    await TeacherEarningsModel.create({
       teacherId: teacherId,
       courseId: newCourse.courseId,
       title: newCourse.title,
@@ -99,7 +92,6 @@ export const createCourse = async (
       earnings: 0,
       updatedAt: new Date().toISOString(),
     });
-    await newTeacherEarning.save();
 
     res.status(200).json({
       success: true,
@@ -124,7 +116,7 @@ export const updateCourse = async (
   const { userId } = getAuth(req);
 
   try {
-    const course = await Course.get(courseId);
+    const course = await CourseModel.findById(courseId);
 
     if (!course) {
       res.status(404).json({
@@ -230,27 +222,27 @@ export const updateCourse = async (
     }
 
     // Update course
-    Object.assign(course, updateData);
-    await course.save();
+    const updatedCourse = await CourseModel.update(courseId, updateData);
 
     // Optionally update TeacherEarnings title if course title changed
     if (updateData.title) {
-      const earningsRecord = await TeacherEarnings.get({
-        teacherId: course.teacherId,
-        courseId: course.courseId,
-      });
+      const earningsRecord = await TeacherEarningsModel.findByTeacherIdAndCourseId(
+        course.teacherId,
+        course.courseId
+      );
 
       if (earningsRecord) {
-        earningsRecord.title = updateData.title;
-        earningsRecord.updatedAt = new Date().toISOString();
-        await earningsRecord.save();
+        await TeacherEarningsModel.update(course.teacherId, course.courseId, {
+          title: updateData.title,
+          updatedAt: new Date().toISOString(),
+        });
       }
     }
 
     res.status(200).json({
       success: true,
       message: "Course updated successfully",
-      data: course,
+      data: updatedCourse,
     });
   } catch (error) {
     res.status(500).json({
@@ -269,7 +261,7 @@ export const deleteCourse = async (
   const { userId } = getAuth(req);
 
   try {
-    const course = await Course.get(courseId);
+    const course = await CourseModel.findById(courseId);
 
     if (!course) {
       res.status(404).json({
@@ -287,14 +279,11 @@ export const deleteCourse = async (
       return;
     }
 
-    // Delete the course
-    await Course.delete(courseId);
+    // Delete the course (cascade will handle related records)
+    await CourseModel.delete(courseId);
 
     // Delete corresponding TeacherEarnings record
-    await TeacherEarnings.delete({
-      teacherId: course.teacherId,
-      courseId: course.courseId,
-    });
+    await TeacherEarningsModel.delete(course.teacherId, course.courseId);
 
     res.status(200).json({
       success: true,

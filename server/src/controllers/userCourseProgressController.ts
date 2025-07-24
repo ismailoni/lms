@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { getAuth } from "@clerk/express";
-import UserCourseProgress from "../models/userCourseProgressModel";
-import Course from "../models/courseModel";
+import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
+import CourseModel from "../models/prisma/courseModel";
 import { calculateOverallProgress } from "../utils/utils";
 import { mergeSections } from "../utils/utils";
 
@@ -20,11 +20,17 @@ export const getUserEnrolledCourses = async (
     return;
   }
   try {
-    const enrolledCourses = await UserCourseProgress.query("userId")
-      .eq(userId)
-      .exec();
-    const courseIds = enrolledCourses.map((item: any) => item.courseId);
-    const courses = await Course.batchGet(courseIds);
+    const enrolledCourses = await UserCourseProgressModel.findByUserId(userId);
+    
+    // Extract unique course data from the progress records
+    const courses = enrolledCourses.map((progress: any) => ({
+      courseId: progress.courseId,
+      title: progress.course_title,
+      teacherName: progress.teacherName,
+      category: progress.category,
+      overallProgress: progress.overallProgress,
+      lastAccessedTimestamp: progress.lastAccessedTimestamp,
+    }));
 
     res.status(200).json({
       success: true,
@@ -47,7 +53,7 @@ export const getUserCourseProgress = async (
   const { userId, courseId } = req.params;
 
   try {
-    const progress = await UserCourseProgress.get({ userId, courseId });
+    const progress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);
 
     res.status(200).json({
       success: true,
@@ -71,35 +77,75 @@ export const updateUserCourseProgress = async (
   const progressData = req.body;
 
   try {
-    let progress = await UserCourseProgress.get({ userId, courseId });
+    let progress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);
 
     if (!progress) {
-      progress = new UserCourseProgress({
+      // Create new progress record
+      progress = await UserCourseProgressModel.create({
         userId,
         courseId,
-        sections: progressData.sections || [],
         enrollmentDate: new Date().toISOString(),
         overallProgress: 0,
         lastAccessedTimestamp: new Date().toISOString(),
       });
+
+      // Create initial section and chapter progress structure if provided
+      if (progressData.sections && progressData.sections.length > 0) {
+        for (const sectionData of progressData.sections) {
+          const sectionProgress = await UserCourseProgressModel.createSectionProgress(
+            progress.id,
+            sectionData.sectionId
+          );
+
+          if (sectionData.chapters && sectionData.chapters.length > 0) {
+            for (const chapterData of sectionData.chapters) {
+              await UserCourseProgressModel.createChapterProgress(
+                sectionProgress.id,
+                chapterData.chapterId,
+                chapterData.completed || false
+              );
+            }
+          }
+        }
+      }
     } else {
-      // Merge existing sections with new sections
-      progress.sections = mergeSections(
-        progress.sections,
-        progressData.sections || []
-      );
-      // Update last accessed timestamp
-      progress.lastAccessedTimestamp = new Date().toISOString();
-      // Update overall progress
-      progress.overallProgress = calculateOverallProgress(progress.sections);
+      // Update existing progress
+      const updatedProgress = await UserCourseProgressModel.update(userId, courseId, {
+        lastAccessedTimestamp: new Date().toISOString(),
+        overallProgress: progressData.overallProgress || progress.overallProgress,
+      });
+      progress = updatedProgress;
+
+      // Update individual chapter progress if provided
+      if (progressData.sections && progressData.sections.length > 0) {
+        for (const sectionData of progressData.sections) {
+          if (sectionData.chapters && sectionData.chapters.length > 0) {
+            for (const chapterData of sectionData.chapters) {
+              // Find the section progress for this section
+              const sectionProgress = progress.sectionProgress?.find(
+                (sp: any) => sp.sectionId === sectionData.sectionId
+              );
+              
+              if (sectionProgress) {
+                await UserCourseProgressModel.updateChapterProgress(
+                  chapterData.chapterId,
+                  sectionProgress.id,
+                  chapterData.completed
+                );
+              }
+            }
+          }
+        }
+      }
     }
 
-    await progressData.save();
+    // Get updated progress with all related data
+    const updatedProgress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);
 
     res.status(200).json({
       success: true,
       message: "User course progress updated successfully",
-      data: progressData,
+      data: updatedProgress,
     });
   } catch (error) {
     res.status(500).json({

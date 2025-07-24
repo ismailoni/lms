@@ -1,9 +1,9 @@
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import { Request, Response } from "express";
-import Course from "../models/courseModel";
-import Transaction from "../models/transactionModel";
-import UserCourseProgress from "../models/userCourseProgressModel";
+import CourseModel from "../models/prisma/courseModel";
+import TransactionModel from "../models/prisma/transactionModel";
+import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
 
 dotenv.config();
 
@@ -21,8 +21,8 @@ export const listTransaction = async (
 
   try {
     const transactions = userId
-      ? await Transaction.query("userId").eq(userId).exec()
-      : await Transaction.scan().exec();
+      ? await TransactionModel.findByUserId(userId as string)
+      : await TransactionModel.findAll();
 
     res.json({
       message: "Transactions retrieved successfully",
@@ -71,45 +71,53 @@ export const createTransaction = async (
 
   try {
     //1. get course info
-    const course = await Course.get(courseId);
+    const course = await CourseModel.findById(courseId);
+    
+    if (!course) {
+      res.status(404).json({ message: "Course not found" });
+      return;
+    }
 
     //2. create transaction record
-    const newTransaction = new Transaction({
+    const newTransaction = await TransactionModel.createWithId(transactionId, {
       dateTime: new Date().toISOString(),
       userId,
       courseId,
-      transactionId,
       amount,
       paymentProvider,
     });
-    await newTransaction.save();
 
     //3. create initial course progress
-    const initialProgress = new UserCourseProgress({
+    const initialProgress = await UserCourseProgressModel.create({
       userId,
       courseId,
       enrollmentDate: new Date().toISOString(),
       overallProgress: 0,
-      sections: course.sections.map((section: any) => ({
-        sectionId: section.sectionId,
-        chapters: section.chapters.map((chapter: any) => ({
-          chapterId: chapter.chapterId,
-          completed: false,
-        })),
-      })),
       lastAccessedTimestamp: new Date().toISOString(),
     });
-    await initialProgress.save();
 
-    //4. add enrollments to relevant course
-    await Course.update(
-      { courseId },
-      {
-        $ADD: {
-          enrollments: [{ userId }],
-        },
+    // Create section and chapter progress structure
+    if (course.sections && course.sections.length > 0) {
+      for (const section of course.sections) {
+        const sectionProgress = await UserCourseProgressModel.createSectionProgress(
+          initialProgress.id,
+          section.sectionId
+        );
+
+        if (section.chapters && section.chapters.length > 0) {
+          for (const chapter of section.chapters) {
+            await UserCourseProgressModel.createChapterProgress(
+              sectionProgress.id,
+              chapter.chapterId,
+              false
+            );
+          }
+        }
       }
-    );
+    }
+
+    //4. add enrollment to relevant course
+    await CourseModel.addEnrollment(courseId, userId);
 
     res.json({
       message: "Purchased Course Successfully",
