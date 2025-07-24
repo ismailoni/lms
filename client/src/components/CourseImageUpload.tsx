@@ -50,38 +50,8 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
         return;
       }
 
-      // Check image dimensions
-      const img = document.createElement('img');
-      img.onload = () => {
-        const { width, height } = img;
-        const aspectRatio = width / height;
-
-        // Check minimum dimensions
-        if (width < 640 || height < 360) {
-          setError("Image must be at least 640 × 360 pixels");
-          resolve(false);
-          return;
-        }
-
-        // Check aspect ratio (16:9 with some tolerance)
-        const targetRatio = 16 / 9;
-        const tolerance = 0.1;
-        if (Math.abs(aspectRatio - targetRatio) > tolerance) {
-          setError("Image must have a 16:9 aspect ratio (recommended: 1280 × 720 px)");
-          resolve(false);
-          return;
-        }
-
-        setError(null);
-        resolve(true);
-      };
-
-      img.onerror = () => {
-        setError("Invalid image file");
-        resolve(false);
-      };
-
-      img.src = URL.createObjectURL(file);
+      setError(null);
+      resolve(true);
     });
   };
 
@@ -158,10 +128,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
                         Upload course thumbnail
                       </p>
                       <p className="text-sm text-customgreys-dirtyGrey opacity-70">
-                        16:9 aspect ratio • 1280 × 720 px recommended • Max 2MB
-                      </p>
-                      <p className="text-xs text-customgreys-dirtyGrey opacity-50 mt-1">
-                        Supports .jpg, .jpeg, .png, .webp
+                        Max 2MB • Supports .jpg, .jpeg, .png, .webp
                       </p>
                     </div>
                     <Button
