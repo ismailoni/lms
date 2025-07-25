@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
     "scripts": {
-    "build": "rimraf dist && npx tsc && cpx \"src/seed/data/**/*\" dist/seed/data",
-    "start": "npm run db:generate && npm run db:migrate:deploy && npm run build && node dist/index.js",
+    "build": "npm run db:generate && rimraf dist && npx tsc && cpx \"src/seed/data/**/*\" dist/seed/data",
+    "start": "npm run db:migrate:deploy && npm run build && node dist/index.js",
     "dev": "npm run build && concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\"",
     "seed": "node dist/seed/seedPostgreSQL.js",
     "test-migration": "ts-node test-migration.ts",
