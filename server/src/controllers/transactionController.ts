@@ -1,134 +1,203 @@
-import Stripe from "stripe";
-import dotenv from "dotenv";
 import { Request, Response } from "express";
-import CourseModel from "../models/prisma/courseModel";
 import TransactionModel from "../models/prisma/transactionModel";
-import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
+import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
+import CourseModel from "../models/prisma/courseModel";
+import Stripe from "stripe";
 
-dotenv.config();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-12-18.acacia",
+});
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("No Stripe secret key found");
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-export const listTransaction = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { userId } = req.query;
-
+export const createTransaction = async (req: Request, res: Response): Promise<void> => {
   try {
-    const transactions = userId
+    const transactionData = req.body;
+    
+    // Create the transaction
+    const transaction = await TransactionModel.create(transactionData);
+    
+    // Update teacher earnings automatically
+    await updateTeacherEarnings(transactionData.courseId, transactionData.amount || 0);
+
+    res.status(201).json({
+      success: true,
+      message: "Transaction created successfully",
+      data: transaction,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error creating transaction",
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const listTransaction = async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.query;
+  try {
+    const transactions = userId 
       ? await TransactionModel.findByUserId(userId as string)
       : await TransactionModel.findAll();
 
-    res.json({
+    res.status(200).json({
+      success: true,
       message: "Transactions retrieved successfully",
       data: transactions,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error retrieving transactions", error });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching transactions",
+      error: (error as Error).message,
+    });
   }
 };
 
-export const createStripePaymentIntent = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  let { amount } = req.body;
-
-  if (!amount || amount <= 0) {
-    amount = 50;
-  }
-
+export const createStripePaymentIntent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: "usd",
-      automatic_payment_methods: {
-        enabled: true,
-        allow_redirects: "never",
-      },
-    });
-    res.json({
-      message: "",
-      data: {
-        clientSecret: paymentIntent.client_secret,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error creating payment intent", error });
-  }
-};
-
-export const createTransaction = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { userId, courseId, transactionId, amount, paymentProvider } = req.body;
-
-  try {
-    //1. get course info
-    const course = await CourseModel.findById(courseId);
+    const { amount, courseId, userId } = req.body;
     
-    if (!course) {
-      res.status(404).json({ message: "Course not found" });
+    if (!amount || !courseId || !userId) {
+      res.status(400).json({
+        success: false,
+        message: "Missing required fields: amount, courseId, userId",
+      });
       return;
     }
 
-    //2. create transaction record
-    const newTransaction = await TransactionModel.createWithId(transactionId, {
-      dateTime: new Date().toISOString(),
-      userId,
-      courseId,
-      amount,
-      paymentProvider,
+    // Create Stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Stripe uses cents
+      currency: "usd",
+      metadata: {
+        courseId,
+        userId,
+      },
     });
 
-    //3. create initial course progress
-    const initialProgress = await UserCourseProgressModel.create({
-      userId,
-      courseId,
-      enrollmentDate: new Date().toISOString(),
-      overallProgress: 0,
-      lastAccessedTimestamp: new Date().toISOString(),
-    });
-
-    // Create section and chapter progress structure
-    if (course.sections && course.sections.length > 0) {
-      for (const section of course.sections) {
-        const sectionProgress = await UserCourseProgressModel.createSectionProgress(
-          initialProgress.id,
-          section.sectionId
-        );
-
-        if (section.chapters && section.chapters.length > 0) {
-          for (const chapter of section.chapters) {
-            await UserCourseProgressModel.createChapterProgress(
-              sectionProgress.id,
-              chapter.chapterId,
-              false
-            );
-          }
-        }
-      }
-    }
-
-    //4. add enrollment to relevant course
-    await CourseModel.addEnrollment(courseId, userId);
-
-    res.json({
-      message: "Purchased Course Successfully",
+    res.status(200).json({
+      success: true,
+      message: "Payment intent created successfully",
       data: {
-        transaction: newTransaction,
-        courseProgress: initialProgress,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
       },
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating transaction and enrollment", error });
+    res.status(500).json({
+      success: false,
+      message: "Error creating payment intent",
+      error: (error as Error).message,
+    });
+  }
+};
+
+// Helper function to update teacher earnings
+async function updateTeacherEarnings(courseId: string, transactionAmount: number): Promise<void> {
+  try {
+    // Get course details to find the teacher
+    const course = await CourseModel.findById(courseId);
+    
+    if (!course) {
+      console.error(`Course not found: ${courseId}`);
+      return;
+    }
+
+    // Calculate teacher's 70% commission
+    const teacherEarning = Math.round(transactionAmount * 0.7);
+    
+    // Check if teacher earnings record exists
+    const existingEarnings = await TeacherEarningsModel.findByTeacherIdAndCourseId(
+      course.teacherId, 
+      courseId
+    );
+    
+    if (existingEarnings) {
+      // Update existing record
+      await TeacherEarningsModel.update(course.teacherId, courseId, {
+        enrollCount: (existingEarnings.enrollCount || 0) + 1,
+        earnings: (existingEarnings.earnings || 0) + teacherEarning,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      console.log(`Updated earnings for teacher ${course.teacherId}, course ${courseId}: +$${teacherEarning/100}`);
+    } else {
+      // Create new record
+      await TeacherEarningsModel.create({
+        teacherId: course.teacherId,
+        courseId: courseId,
+        title: course.title,
+        enrollCount: 1,
+        earnings: teacherEarning,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      console.log(`Created new earnings record for teacher ${course.teacherId}, course ${courseId}: $${teacherEarning/100}`);
+    }
+  } catch (error) {
+    console.error('Error updating teacher earnings:', error);
+    // Don't throw error - we don't want to fail the transaction if earnings update fails
+  }
+}
+
+// Stripe webhook handler for production payments
+export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const sig = req.headers['stripe-signature'] as string;
+    
+    if (!sig) {
+      res.status(400).json({
+        success: false,
+        message: "Missing stripe signature",
+      });
+      return;
+    }
+
+    const event = stripe.webhooks.constructEvent(
+      req.body, 
+      sig, 
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+    
+    console.log(`Received Stripe webhook: ${event.type}`);
+    
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const { courseId, userId } = paymentIntent.metadata;
+      
+      if (!courseId || !userId) {
+        console.error('Missing metadata in payment intent:', paymentIntent.metadata);
+        res.status(400).json({
+          success: false,
+          message: "Missing courseId or userId in payment metadata",
+        });
+        return;
+      }
+
+      // Create transaction record
+      const transactionData = {
+        userId,
+        courseId,
+        amount: paymentIntent.amount / 100, // Convert back from cents
+        dateTime: new Date().toISOString(),
+        paymentProvider: 'stripe' as const
+      };
+
+      const transaction = await TransactionModel.create(transactionData);
+      
+      // Update teacher earnings automatically
+      await updateTeacherEarnings(courseId, transactionData.amount);
+      
+      console.log(`Payment successful: ${paymentIntent.id}, Transaction created: ${transaction}`);
+    }
+    
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Stripe webhook error:', error);
+    res.status(400).json({
+      success: false,
+      message: "Webhook error",
+      error: (error as Error).message,
+    });
   }
 };

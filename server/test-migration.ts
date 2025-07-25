@@ -1,8 +1,8 @@
 #!/usr/bin/env ts-node
 import dotenv from 'dotenv';
-import db from '../src/utils/database';
-import runMigrations from '../src/utils/runMigrations';
-import seedPostgreSQL from '../src/seed/seedPostgreSQL';
+import db from 'utils/database';
+import runMigrations from './utils/runMigrations';
+import seedPostgreSQL from 'seed/seedPostgreSQL';
 
 dotenv.config();
 

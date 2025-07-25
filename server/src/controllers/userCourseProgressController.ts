@@ -25,9 +25,9 @@ export const getUserEnrolledCourses = async (
     // Extract unique course data from the progress records
     const courses = enrolledCourses.map((progress: any) => ({
       courseId: progress.courseId,
-      title: progress.course_title,
-      teacherName: progress.teacherName,
-      category: progress.category,
+      title: progress.course?.title, // Fixed: accessing nested course data
+      teacherName: progress.course?.teacherName, // Fixed: accessing nested course data
+      category: progress.course?.category, // Fixed: accessing nested course data
       overallProgress: progress.overallProgress,
       lastAccessedTimestamp: progress.lastAccessedTimestamp,
     }));
@@ -81,26 +81,29 @@ export const updateUserCourseProgress = async (
 
     if (!progress) {
       // Create new progress record
-      progress = await UserCourseProgressModel.create({
-        userId,
-        courseId,
-        enrollmentDate: new Date().toISOString(),
-        overallProgress: 0,
-        lastAccessedTimestamp: new Date().toISOString(),
-      });
+      progress = {
+        ...(await UserCourseProgressModel.create({
+          userId,
+          courseId,
+          enrollmentDate: new Date().toISOString(), // Keep as string since interface expects string
+          overallProgress: 0,
+          lastAccessedTimestamp: new Date().toISOString(), // Keep as string since interface expects string
+        })),
+        sectionProgress: [],
+      };
 
       // Create initial section and chapter progress structure if provided
       if (progressData.sections && progressData.sections.length > 0) {
         for (const sectionData of progressData.sections) {
           const sectionProgress = await UserCourseProgressModel.createSectionProgress(
-            progress.id,
+            progress && progress.id ? progress.id : "", // Fixed: ensure progress is not null
             sectionData.sectionId
           );
 
           if (sectionData.chapters && sectionData.chapters.length > 0) {
             for (const chapterData of sectionData.chapters) {
               await UserCourseProgressModel.createChapterProgress(
-                sectionProgress.id,
+                sectionProgress.id, // Fixed: use correct field name
                 chapterData.chapterId,
                 chapterData.completed || false
               );
@@ -110,11 +113,10 @@ export const updateUserCourseProgress = async (
       }
     } else {
       // Update existing progress
-      const updatedProgress = await UserCourseProgressModel.update(userId, courseId, {
-        lastAccessedTimestamp: new Date().toISOString(),
+      await UserCourseProgressModel.update(userId, courseId, {
+        lastAccessedTimestamp: new Date().toISOString(), // Keep as string since interface expects string
         overallProgress: progressData.overallProgress || progress.overallProgress,
       });
-      progress = updatedProgress;
 
       // Update individual chapter progress if provided
       if (progressData.sections && progressData.sections.length > 0) {
@@ -129,7 +131,7 @@ export const updateUserCourseProgress = async (
               if (sectionProgress) {
                 await UserCourseProgressModel.updateChapterProgress(
                   chapterData.chapterId,
-                  sectionProgress.id,
+                  sectionProgress.id, // Fixed: use correct field name
                   chapterData.completed
                 );
               }

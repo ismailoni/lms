@@ -1,198 +1,250 @@
-import fs from "fs";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 import path from "path";
-import db from "../utils/database";
-import runMigrations from "../utils/runMigrations";
+import fs from "fs";
 import dotenv from "dotenv";
+import {
+  PrismaClient,
+  CourseLevel,
+  CourseStatus,
+  PaymentProvider,
+  Prisma,
+} from "@prisma/client";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+console.log(
+  "Loaded DATABASE_URL:",
+  process.env.DATABASE_URL || "❌ Not found!"
+);
 
-async function createTables() {
-  try {
-    console.log("Running migrations to create tables...");
-    await runMigrations();
-    console.log("Tables created successfully");
-  } catch (error) {
-    console.error("Error creating tables:", error);
-    throw error;
-  }
-}
+const prisma = new PrismaClient();
+
+const dataPath = (...p: string[]) => path.join(__dirname, "data", ...p);
+const readJSON = <T = any>(p: string): T =>
+  JSON.parse(fs.readFileSync(p, "utf8"));
 
 async function seedData() {
-  try {
-    console.log("Seeding data...");
-    
-    // Read JSON data files
-    const coursesData = JSON.parse(
-      fs.readFileSync(path.join(__dirname, "data/courses.json"), "utf8")
-    );
-    const transactionsData = JSON.parse(
-      fs.readFileSync(path.join(__dirname, "data/transactions.json"), "utf8")
-    );
-    const userCourseProgressData = JSON.parse(
-      fs.readFileSync(path.join(__dirname, "data/userCourseProgress.json"), "utf8")
-    );
+  console.log("Seeding full data hierarchy...");
 
-    // Clear existing data
-    console.log("Clearing existing data...");
-    await db.query('TRUNCATE TABLE teacher_earnings, transactions, chapter_progress, section_progress, user_course_progress, enrollments, comments, chapters, sections, courses RESTART IDENTITY CASCADE');
+  const coursesRaw = readJSON<any[]>(dataPath("courses.json"));
+  const transactionsRaw = readJSON<any[]>(dataPath("transactions.json"));
+  const userCourseProgressRaw = readJSON<any[]>(
+    dataPath("userCourseProgress.json")
+  );
 
-    // Seed courses
-    console.log("Seeding courses...");
-    for (const course of coursesData) {
-      // Insert course
-      const courseResult = await db.query(
-        `INSERT INTO courses ("courseId", "teacherId", "teacherName", "teacherImage", title, description, category, image, price, level, status, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
-         RETURNING "courseId"`,
-        [
-          course.courseId,
-          course.teacherId,
-          course.teacherName,
-          course.teacherImage,
-          course.title,
-          course.description,
-          course.category,
-          course.image,
-          course.price,
-          course.level,
-          course.status
-        ]
-      );
+  console.log("Clearing existing data...");
+  await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE 
+      "teacher_earnings", 
+      "transactions", 
+      "chapter_progress", 
+      "section_progress", 
+      "user_course_progress", 
+      "enrollments", 
+      "comments", 
+      "chapters", 
+      "sections", 
+      "courses"
+    RESTART IDENTITY CASCADE;
+  `);
 
-      const courseId = courseResult.rows[0].courseId;
+  const pendingComments: Prisma.CommentCreateManyInput[] = [];
+  const pendingChapterProgress: Prisma.ChapterProgressCreateManyInput[] = [];
 
-      // Insert sections
-      if (course.sections && course.sections.length > 0) {
-        for (const section of course.sections) {
-          const sectionResult = await db.query(
-            `INSERT INTO sections ("sectionId", "sectionTitle", "sectionDescription", "courseId")
-             VALUES ($1, $2, $3, $4)
-             RETURNING "sectionId"`,
-            [section.sectionId, section.sectionTitle, section.sectionDescription, courseId]
-          );
+  // --- Insert Courses → Sections → Chapters ---
+  console.log("Inserting courses, sections, chapters...");
+  for (const course of coursesRaw) {
+    const createdCourse = await prisma.course.create({
+      data: {
+        courseId: course.courseId, // Preserve the original courseId
+        teacherId: course.teacherId ?? course.teacher_id,
+        teacherName: course.teacherName ?? course.teacher_name,
+        teacherImage: course.teacherImage ?? course.teacher_image ?? null,
+        title: course.title,
+        description: course.description ?? null,
+        category: course.category,
+        image: course.image ?? null,
+        price: course.price ?? null,
+        level: (course.level ?? "Beginner") as CourseLevel,
+        status: (course.status ?? "Published") as CourseStatus,
+      },
+    });
 
-          const sectionId = sectionResult.rows[0].sectionId;
+    if (course.enrollments && course.enrollments.length > 0) {
+      for (const enrollment of course.enrollments) {
+        await prisma.enrollment.create({
+          data: {
+            userId: enrollment.userId,
+            courseId: course.courseId, // Use the original courseId
+          },
+        });
+      }
+    }
 
-          // Insert chapters
-          if (section.chapters && section.chapters.length > 0) {
-            for (const chapter of section.chapters) {
-              const chapterResult = await db.query(
-                `INSERT INTO chapters ("chapterId", type, title, content, video, "sectionId")
-                 VALUES ($1, $2, $3, $4, $5, $6)
-                 RETURNING "chapterId"`,
-                [chapter.chapterId, chapter.type, chapter.title, chapter.content, chapter.video, sectionId]
-              );
+    if (Array.isArray(course.sections)) {
+      for (const sec of course.sections) {
+        const createdSection = await prisma.section.create({
+          data: {
+            // Remove sectionId to let Prisma auto-generate unique IDs
+            sectionTitle: sec.sectionTitle ?? sec.title,
+            sectionDescription:
+              sec.sectionDescription ?? sec.description ?? null,
+            courseId: createdCourse.courseId,
+          },
+        });
 
-              const chapterId = chapterResult.rows[0].chapterId;
+        if (Array.isArray(sec.chapters)) {
+          for (const ch of sec.chapters) {
+            const createdChapter = await prisma.chapter.create({
+              data: {
+                // Remove chapterId to let Prisma auto-generate unique IDs
+                type: ch.type ?? "Text",
+                title: ch.title,
+                content: ch.content,
+                video: ch.video ?? null,
+                sectionId: createdSection.sectionId,
+              },
+            });
 
-              // Insert comments
-              if (chapter.comments && chapter.comments.length > 0) {
-                for (const comment of chapter.comments) {
-                  await db.query(
-                    `INSERT INTO comments ("commentId", "userId", text, timestamp, "chapterId")
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [comment.commentId, comment.userId, comment.text, comment.timestamp, chapterId]
-                  );
-                }
+            if (Array.isArray(ch.comments)) {
+              for (const c of ch.comments) {
+                pendingComments.push({
+                  userId: c.userId ?? c.user_id,
+                  text: c.text,
+                  timestamp: c.timestamp,
+                  chapterId: createdChapter.chapterId,
+                });
               }
             }
           }
         }
       }
+    }
+  }
 
-      // Insert enrollments
-      if (course.enrollments && course.enrollments.length > 0) {
-        for (const enrollment of course.enrollments) {
-          await db.query(
-            `INSERT INTO enrollments ("userId", "courseId")
-             VALUES ($1, $2)
-             ON CONFLICT ("userId", "courseId") DO NOTHING`,
-            [enrollment.userId, courseId]
-          );
-        }
-      }
+  // --- Insert Transactions ---
+  console.log("Inserting transactions...");
+  if (transactionsRaw.length) {
+    await prisma.transaction.createMany({
+      data: transactionsRaw.map((t) => ({
+        userId: t.userId ?? t.user_id,
+        dateTime: t.dateTime ?? t.date_time,
+        courseId: t.courseId ?? t.course_id,
+        paymentProvider: (t.paymentProvider ?? "stripe") as PaymentProvider,
+        amount: t.amount ?? null,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  console.log("Generating teacher earnings...");
+  // Calculate and insert teacher earnings based on transactions
+  const transactions = await prisma.transaction.findMany({
+    include: {
+      course: true,
+    },
+  });
+
+  // Group transactions by teacher and course
+  const earningsMap = new Map();
+
+  for (const transaction of transactions) {
+    const key = `${transaction.course.teacherId}-${transaction.courseId}`;
+
+    if (!earningsMap.has(key)) {
+      earningsMap.set(key, {
+        teacherId: transaction.course.teacherId,
+        courseId: transaction.courseId,
+        title: transaction.course.title,
+        enrollCount: 0,
+        earnings: 0,
+      });
     }
 
-    // Seed transactions
-    console.log("Seeding transactions...");
-    for (const transaction of transactionsData) {
-      await db.query(
-        `INSERT INTO transactions ("transactionId", "userId", "dateTime", "courseId", "paymentProvider", amount, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
-        [
-          transaction.transactionId,
-          transaction.userId,
-          transaction.dateTime,
-          transaction.courseId,
-          transaction.paymentProvider,
-          transaction.amount
-        ]
-      );
-    }
+    const earnings = earningsMap.get(key);
+    earnings.enrollCount += 1;
+    earnings.earnings += (transaction.amount || 0) * 0.7; // Assuming 70% commission to teacher
+  }
 
-    // Seed user course progress
-    console.log("Seeding user course progress...");
-    for (const progress of userCourseProgressData) {
-      const progressResult = await db.query(
-        `INSERT INTO user_course_progress ("userId", "courseId", "enrollmentDate", "overallProgress", "lastAccessedTimestamp", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-         RETURNING id`,
-        [
-          progress.userId,
-          progress.courseId,
-          progress.enrollmentDate,
-          progress.overallProgress,
-          progress.lastAccessedTimestamp
-        ]
-      );
+  // Insert teacher earnings
+  for (const [key, earningsData] of earningsMap) {
+    await prisma.teacherEarnings.create({
+      data: {
+        teacherId: earningsData.teacherId,
+        courseId: earningsData.courseId,
+        title: earningsData.title,
+        enrollCount: earningsData.enrollCount,
+        earnings: Math.round(earningsData.earnings), // Round to nearest cent
+      },
+    });
+  }
 
-      const userCourseProgressId = progressResult.rows[0].id;
+  console.log("Teacher earnings generated successfully!");
 
-      // Insert section progress
-      if (progress.sections && progress.sections.length > 0) {
-        for (const sectionProgress of progress.sections) {
-          const sectionProgressResult = await db.query(
-            `INSERT INTO section_progress ("sectionId", "userCourseProgressId")
-             VALUES ($1, $2)
-             RETURNING id`,
-            [sectionProgress.sectionId, userCourseProgressId]
-          );
+  // --- Insert UserCourseProgress → SectionProgress (collect ChapterProgress) ---
+  console.log("Inserting user course progress...");
+  for (const ucp of userCourseProgressRaw) {
+    const createdUCP = await prisma.userCourseProgress.create({
+      data: {
+        userId: ucp.userId ?? ucp.user_id,
+        courseId: ucp.courseId ?? ucp.course_id,
+        enrollmentDate: ucp.enrollmentDate ?? ucp.enrollment_date,
+        overallProgress: ucp.overallProgress ?? ucp.overall_progress,
+        lastAccessedTimestamp:
+          ucp.lastAccessedTimestamp ?? ucp.last_accessed_timestamp,
+      },
+    });
 
-          const sectionProgressId = sectionProgressResult.rows[0].id;
+    if (Array.isArray(ucp.sectionProgress)) {
+      for (const sp of ucp.sectionProgress) {
+        const createdSP = await prisma.sectionProgress.create({
+          data: {
+            sectionId: sp.sectionId ?? sp.section_id,
+            userCourseProgressId: createdUCP.id,
+          },
+        });
 
-          // Insert chapter progress
-          if (sectionProgress.chapters && sectionProgress.chapters.length > 0) {
-            for (const chapterProgress of sectionProgress.chapters) {
-              await db.query(
-                `INSERT INTO chapter_progress ("chapterId", completed, "sectionProgressId")
-                 VALUES ($1, $2, $3)`,
-                [chapterProgress.chapterId, chapterProgress.completed, sectionProgressId]
-              );
-            }
+        if (Array.isArray(sp.chapterProgress)) {
+          for (const cp of sp.chapterProgress) {
+            pendingChapterProgress.push({
+              chapterId: cp.chapterId ?? cp.chapter_id,
+              completed: !!cp.completed,
+              sectionProgressId: createdSP.id,
+            });
           }
         }
       }
     }
-
-    console.log("Data seeded successfully");
-  } catch (error) {
-    console.error("Error seeding data:", error);
-    throw error;
   }
+
+  // --- Bulk Inserts ---
+  console.log(
+    `Bulk inserting ${pendingComments.length} comments and ${pendingChapterProgress.length} chapter progress entries...`
+  );
+
+  if (pendingComments.length) {
+    await prisma.comment.createMany({ data: pendingComments });
+  }
+
+  if (pendingChapterProgress.length) {
+    await prisma.chapterProgress.createMany({ data: pendingChapterProgress });
+  }
+
+  console.log("Data seeded successfully!");
 }
 
 export default async function seedPostgreSQL() {
   try {
-    await createTables();
     await seedData();
     console.log("PostgreSQL database setup completed successfully");
   } catch (error) {
     console.error("Failed to setup PostgreSQL database:", error);
-    throw error;
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-// Run if called directly
 if (require.main === module) {
   seedPostgreSQL()
     .then(() => {

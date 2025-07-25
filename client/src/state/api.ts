@@ -121,7 +121,7 @@ export const api = createApi({
       { teacherId: string; teacherName: string }
     >({
       query: (body) => ({
-        url: `/courses`,
+        url: `courses`,
         method: "POST",
         body,
       }),
@@ -133,7 +133,7 @@ export const api = createApi({
       { courseId: string; formData: FormData }
     >({
       query: ({ courseId, formData }) => ({
-        url: `/courses/${courseId}`,
+        url: `courses/${courseId}`,
         method: "PUT",
         body: formData,
       }),
@@ -197,7 +197,7 @@ export const api = createApi({
       { amount: number }
     >({
       query: ({ amount }) => ({
-        url: `/transactions/stripe/payment-intent`,
+        url: `transactions/stripe/payment-intent`,
         method: "POST",
         body: { amount },
       }),
@@ -212,7 +212,7 @@ export const api = createApi({
     }),
 
     getUserEnrolledCourses: build.query<Course[], string>({
-      query: (userId) => `/${userId}/enrolled-courses`,
+      query: (userId) => `${userId}/enrolled-courses`,
       providesTags: ["Courses", "UserCourseProgress"],
     }),
 
@@ -220,7 +220,7 @@ export const api = createApi({
       UserCourseProgress,
       { userId: string; courseId: string }
     >({
-      query: ({ userId, courseId }) => `/${userId}/courses/${courseId}`,
+      query: ({ userId, courseId }) => `${userId}/courses/${courseId}`,
       providesTags: ["UserCourseProgress"],
     }),
 
@@ -235,7 +235,7 @@ export const api = createApi({
       }
     >({
       query: ({ userId, courseId, progressData }) => ({
-        url: `/${userId}/courses/${courseId}`,
+        url: `${userId}/courses/${courseId}`,
         method: "PUT",
         body: progressData,
       }),

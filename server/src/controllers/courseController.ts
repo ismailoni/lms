@@ -137,25 +137,7 @@ export const updateCourse = async (
     // Handle image upload to Cloudinary
     if (req.file) {
       try {
-        const result = await cloudinary.uploader.upload_stream(
-          {
-            resource_type: "image",
-            folder: "course-images",
-            transformation: [
-              { width: 1280, height: 720, crop: "fit" },
-              { quality: "auto", fetch_format: "auto" }
-            ],
-          },
-          (error, result) => {
-            if (error) {
-              console.error("Cloudinary upload error:", error);
-              throw error;
-            }
-            return result;
-          }
-        );
-
-        // Convert buffer to stream
+        // Convert buffer to stream and upload to Cloudinary
         const uploadPromise = new Promise((resolve, reject) => {
           cloudinary.uploader.upload_stream(
             {
@@ -168,6 +150,7 @@ export const updateCourse = async (
             },
             (error, result) => {
               if (error) {
+                console.error("Cloudinary upload error:", error);
                 reject(error);
               } else {
                 resolve(result);

@@ -1,5 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+
+// Force SSL acceptance for Supabase
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 import db from '../utils/database';
 
 export async function runMigrations() {

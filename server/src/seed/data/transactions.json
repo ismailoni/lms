@@ -62,5 +62,37 @@
     "courseId": "8b4f7d9c-4b1c-4b1c-8b4f-7d9c8b4f7d9c",
     "paymentProvider": "stripe",
     "amount": 9999
+  },
+  {
+    "transactionId": "txn_001",
+    "userId": "user_learnerA",
+    "dateTime": "2025-07-20T10:30:00Z",
+    "courseId": "cd41ef29-7890-4f5f-95e2-93f85ee8efcb",
+    "paymentProvider": "stripe",
+    "amount": 2999
+  },
+  {
+    "transactionId": "txn_002", 
+    "userId": "user_learnerB",
+    "dateTime": "2025-07-21T14:15:00Z",
+    "courseId": "cd41ef29-7890-4f5f-95e2-93f85ee8efcb",
+    "paymentProvider": "stripe",
+    "amount": 2999
+  },
+  {
+    "transactionId": "txn_003",
+    "userId": "user_alpha",
+    "dateTime": "2025-07-22T09:45:00Z", 
+    "courseId": "f7c2e3d4-8a9b-4c5d-9e7f-3d2f1b0c9a8b",
+    "paymentProvider": "stripe",
+    "amount": 5999
+  },
+  {
+    "transactionId": "txn_004",
+    "userId": "user_bravo",
+    "dateTime": "2025-07-23T16:20:00Z",
+    "courseId": "f7c2e3d4-8a9b-4c5d-9e7f-3d2f1b0c9a8b", 
+    "paymentProvider": "stripe",
+    "amount": 5999
   }
 ]
