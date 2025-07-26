@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -8,194 +8,162 @@ export interface CreateTeacherEarningsData {
   title?: string;
   enrollCount?: number;
   earnings?: number;
-  updatedAt?: string;
 }
 
 export interface UpdateTeacherEarningsData {
   title?: string;
   enrollCount?: number;
   earnings?: number;
-  updatedAt?: string;
 }
 
 export class TeacherEarningsModel {
+  // Fetch all teacher earnings
   static async findAll() {
-    const teacherEarnings = await prisma.teacherEarnings.findMany({
+    return prisma.teacherEarnings.findMany({
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarnings;
   }
 
+  // Fetch all earnings for a teacher
   static async findByTeacherId(teacherId: string) {
-    const teacherEarnings = await prisma.teacherEarnings.findMany({
+    return prisma.teacherEarnings.findMany({
       where: { teacherId },
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarnings;
   }
 
+  // Fetch a single record by teacher + course
   static async findByTeacherIdAndCourseId(teacherId: string, courseId: string) {
-    const teacherEarning = await prisma.teacherEarnings.findUnique({
-      where: {
-        teacherId_courseId: {
-          teacherId,
-          courseId
-        }
-      },
+    return prisma.teacherEarnings.findUnique({
+      where: { teacherId_courseId: { teacherId, courseId } },
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarning;
   }
 
+  // Create a record
   static async create(data: CreateTeacherEarningsData) {
-    const teacherEarning = await prisma.teacherEarnings.create({
+    return prisma.teacherEarnings.create({
       data: {
         teacherId: data.teacherId,
         courseId: data.courseId,
         title: data.title,
-        enrollCount: data.enrollCount,
-        earnings: data.earnings,
-        updatedAt: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
+        enrollCount: data.enrollCount ?? 0,
+        earnings: data.earnings ?? 0,
+        // No updatedAt — handled by Prisma
       },
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarning;
   }
 
-  static async update(teacherId: string, courseId: string, data: UpdateTeacherEarningsData) {
-    const updateData: any = {};
-    
-    if (data.title !== undefined) {
-      updateData.title = data.title;
-    }
-    if (data.enrollCount !== undefined) {
-      updateData.enrollCount = data.enrollCount;
-    }
-    if (data.earnings !== undefined) {
-      updateData.earnings = data.earnings;
-    }
-    if (data.updatedAt !== undefined) {
-      updateData.updatedAt = new Date(data.updatedAt);
-    }
+  // Update a record
+  static async update(
+    teacherId: string,
+    courseId: string,
+    data: UpdateTeacherEarningsData
+  ) {
+    const updateData: Prisma.TeacherEarningsUpdateInput = {};
+
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.enrollCount !== undefined) updateData.enrollCount = data.enrollCount;
+    if (data.earnings !== undefined) updateData.earnings = data.earnings;
 
     if (Object.keys(updateData).length === 0) {
       throw new Error('No fields to update');
     }
 
-    const teacherEarning = await prisma.teacherEarnings.update({
-      where: {
-        teacherId_courseId: {
-          teacherId,
-          courseId
-        }
-      },
-      data: updateData,
+    return prisma.teacherEarnings.update({
+      where: { teacherId_courseId: { teacherId, courseId } },
+      data: updateData, // updatedAt is auto-updated by Prisma
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarning;
   }
 
-  static async upsert(teacherId: string, courseId: string, data: CreateTeacherEarningsData) {
-    const teacherEarning = await prisma.teacherEarnings.upsert({
-      where: {
-        teacherId_courseId: {
-          teacherId,
-          courseId
-        }
-      },
+  // Upsert a record
+  static async upsert(
+    teacherId: string,
+    courseId: string,
+    data: CreateTeacherEarningsData
+  ) {
+    return prisma.teacherEarnings.upsert({
+      where: { teacherId_courseId: { teacherId, courseId } },
       update: {
         title: data.title,
         enrollCount: data.enrollCount,
         earnings: data.earnings,
-        updatedAt: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
       },
       create: {
         teacherId: data.teacherId,
         courseId: data.courseId,
         title: data.title,
-        enrollCount: data.enrollCount,
-        earnings: data.earnings,
-        updatedAt: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
+        enrollCount: data.enrollCount ?? 0,
+        earnings: data.earnings ?? 0,
       },
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarning;
   }
 
+  // Delete a record
   static async delete(teacherId: string, courseId: string) {
-    const teacherEarning = await prisma.teacherEarnings.delete({
-      where: {
-        teacherId_courseId: {
-          teacherId,
-          courseId
-        }
-      },
+    return prisma.teacherEarnings.delete({
+      where: { teacherId_courseId: { teacherId, courseId } },
       include: {
         course: {
           select: {
             title: true,
             teacherName: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
-
-    return teacherEarning;
   }
 }
 

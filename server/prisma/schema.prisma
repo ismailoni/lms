@@ -151,20 +151,18 @@ model Transaction {
 }
 
 model TeacherEarnings {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   teacherId   String
   courseId    String
   title       String?
   enrollCount Int?
   earnings    Float?
-  updatedAt   String?
-
-  // Relationships
-  course Course @relation(fields: [courseId], references: [courseId])
-
+  updatedAt   DateTime @updatedAt // Change from String? to DateTime
+  course      Course   @relation(fields: [courseId], references: [courseId])
   @@unique([teacherId, courseId])
   @@map("teacher_earnings")
 }
+
 
 enum CourseLevel {
   Beginner

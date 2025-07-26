@@ -53,37 +53,50 @@ export const listTransaction = async (req: Request, res: Response): Promise<void
   }
 };
 
+// This should be in your server-side transaction controller
 export const createStripePaymentIntent = async (req: Request, res: Response): Promise<void> => {
   try {
     const { amount, courseId, userId } = req.body;
-    
-    if (!amount || !courseId || !userId) {
-      res.status(400).json({
-        success: false,
-        message: "Missing required fields: amount, courseId, userId",
-      });
+
+    console.log("Received payment intent request:", { amount, courseId, userId });
+
+    // Validate amount
+    if (!amount || typeof amount !== 'number') {
+      res.status(400).json({ success: false, message: "Amount must be a valid number" });
       return;
     }
 
-    // Create Stripe payment intent
+    if (amount <= 0) {
+      res.status(400).json({ success: false, message: "Amount must be greater than 0" });
+      return;
+    }
+
+    if (!courseId || !userId) {
+      res.status(400).json({ success: false, message: "courseId and userId are required" });
+      return;
+    }
+
+    // Convert amount to cents
+    const amountInCents = Math.round(amount * 100);
+    console.log(`Converted amount to cents: ${amountInCents}`);
+
+    // Create PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe uses cents
+      amount: amountInCents,
       currency: "usd",
-      metadata: {
-        courseId,
-        userId,
-      },
+      automatic_payment_methods: { enabled: true },
+      metadata: { courseId, userId },
     });
+
+    console.log("PaymentIntent created:", paymentIntent.id);
 
     res.status(200).json({
       success: true,
       message: "Payment intent created successfully",
-      data: {
-        clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id,
-      },
+      data: { clientSecret: paymentIntent.client_secret },
     });
   } catch (error) {
+    console.error("Error creating payment intent:", error);
     res.status(500).json({
       success: false,
       message: "Error creating payment intent",
@@ -91,6 +104,7 @@ export const createStripePaymentIntent = async (req: Request, res: Response): Pr
     });
   }
 };
+
 
 // Helper function to update teacher earnings
 async function updateTeacherEarnings(courseId: string, transactionAmount: number): Promise<void> {
@@ -117,7 +131,6 @@ async function updateTeacherEarnings(courseId: string, transactionAmount: number
       await TeacherEarningsModel.update(course.teacherId, courseId, {
         enrollCount: (existingEarnings.enrollCount || 0) + 1,
         earnings: (existingEarnings.earnings || 0) + teacherEarning,
-        updatedAt: new Date().toISOString(),
       });
       
       console.log(`Updated earnings for teacher ${course.teacherId}, course ${courseId}: +$${teacherEarning/100}`);
@@ -128,8 +141,7 @@ async function updateTeacherEarnings(courseId: string, transactionAmount: number
         courseId: courseId,
         title: course.title,
         enrollCount: 1,
-        earnings: teacherEarning,
-        updatedAt: new Date().toISOString(),
+        earnings: teacherEarning
       });
       
       console.log(`Created new earnings record for teacher ${course.teacherId}, course ${courseId}: $${teacherEarning/100}`);

@@ -89,8 +89,7 @@ export const createCourse = async (
       courseId: newCourse.courseId,
       title: newCourse.title,
       enrollCount: 0,
-      earnings: 0,
-      updatedAt: new Date().toISOString(),
+      earnings: 0
     });
 
     res.status(200).json({
@@ -107,10 +106,7 @@ export const createCourse = async (
   }
 };
 
-export const updateCourse = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const updateCourse = async (req: Request, res: Response): Promise<void> => {
   const { courseId } = req.params;
   const updateData = { ...req.body };
   const { userId } = getAuth(req);
@@ -137,7 +133,6 @@ export const updateCourse = async (
     // Handle image upload to Cloudinary
     if (req.file) {
       try {
-        // Convert buffer to stream and upload to Cloudinary
         const uploadPromise = new Promise((resolve, reject) => {
           cloudinary.uploader.upload_stream(
             {
@@ -145,7 +140,7 @@ export const updateCourse = async (
               folder: "course-images",
               transformation: [
                 { width: 1280, height: 720, crop: "fit" },
-                { quality: "auto", fetch_format: "auto" }
+                { quality: "auto", fetch_format: "auto" },
               ],
             },
             (error, result) => {
@@ -159,7 +154,7 @@ export const updateCourse = async (
           ).end(req.file!.buffer);
         });
 
-        const uploadResult = await uploadPromise as any;
+        const uploadResult = (await uploadPromise) as any;
         updateData.image = uploadResult.secure_url;
       } catch (error) {
         console.error("Error uploading image to Cloudinary:", error);
@@ -171,13 +166,13 @@ export const updateCourse = async (
         return;
       }
     } else if (updateData.imageUrl) {
-      // If imageUrl is provided (existing image), keep it
       updateData.image = updateData.imageUrl;
       delete updateData.imageUrl;
     }
 
-    if (updateData.price) {
-      const price = parseInt(updateData.price);
+    // Validate and convert price
+    if (updateData.price !== undefined) {
+      const price = Number(updateData.price);
       if (isNaN(price) || price < 0) {
         res.status(400).json({
           success: false,
@@ -185,29 +180,39 @@ export const updateCourse = async (
         });
         return;
       }
-      updateData.price = price * 100; // Convert to cents if needed
+      updateData.price = price * 100;
     }
 
+    // Handle sections
     if (updateData.sections) {
       const sectionsData =
         typeof updateData.sections === "string"
           ? JSON.parse(updateData.sections)
           : updateData.sections;
 
-      updateData.sections = sectionsData.map((section: any) => ({
-        ...section,
-        sectionId: section.sectionId || uuidv4(),
-        chapters: section.chapters.map((chapter: any) => ({
-          ...chapter,
-          chapterId: chapter.chapterId || uuidv4(),
+      updateData.sections = {
+        deleteMany: {}, // Delete existing sections
+        create: sectionsData.map((section: any) => ({
+          sectionId: section.sectionId || uuidv4(),
+          sectionTitle: section.sectionTitle,
+          sectionDescription: section.sectionDescription,
+          chapters: {
+            create: section.chapters.map((chapter: any) => ({
+              chapterId: chapter.chapterId || uuidv4(),
+              title: chapter.title,
+              content: chapter.content,
+              type: chapter.type,
+              video: chapter.video || "",
+            })),
+          },
         })),
-      }));
+      };
     }
 
-    // Update course
+    // Update the course
     const updatedCourse = await CourseModel.update(courseId, updateData);
 
-    // Optionally update TeacherEarnings title if course title changed
+    // If title changed, update TeacherEarnings title
     if (updateData.title) {
       const earningsRecord = await TeacherEarningsModel.findByTeacherIdAndCourseId(
         course.teacherId,
@@ -217,7 +222,7 @@ export const updateCourse = async (
       if (earningsRecord) {
         await TeacherEarningsModel.update(course.teacherId, course.courseId, {
           title: updateData.title,
-          updatedAt: new Date().toISOString(),
+          // No updatedAt here — Prisma auto-updates it
         });
       }
     }
@@ -235,6 +240,7 @@ export const updateCourse = async (
     });
   }
 };
+
 
 export const deleteCourse = async (
   req: Request,
@@ -286,13 +292,13 @@ export const getUploadVideoUrl = async (
   res: Response
 ): Promise<void> => {
   const { courseId, sectionId, chapterId } = req.params;
-  const { fileName, fileType } = req.body;
+  const { fileName } = req.body;
   const { userId } = getAuth(req);
 
   try {
-    // Verify that the user owns the course
+    // Verify course ownership
     const course = await CourseModel.findById(courseId);
-    
+
     if (!course) {
       res.status(404).json({
         success: false,
@@ -309,38 +315,41 @@ export const getUploadVideoUrl = async (
       return;
     }
 
-    // Validate file type
-    if (!fileType.startsWith('video/')) {
-      res.status(400).json({
-        success: false,
-        message: "Only video files are allowed",
-      });
-      return;
-    }
+    // Correct timestamp
+    const timestamp = Math.floor(Date.now() / 1000);
 
-    // Generate unique filename for video
-    const uniqueFileName = `videos/${courseId}/${sectionId}/${chapterId}/${fileName}`;
+    // Unique public_id for video
+    const publicId = `videos/${courseId}/${sectionId}/${chapterId}/${timestamp}_${fileName}`;
 
-    // Generate Cloudinary signed upload parameters
-    const timestamp = Math.round((new Date()).getTime() / 1000);
-    const uploadParams = {
-      timestamp,
-      public_id: uniqueFileName,
-      resource_type: 'video',
-      folder: 'course-videos',
+    // Parameters for signing (no resource_type)
+    const paramsToSign = {
+      folder: "course-videos",
+      public_id: publicId,
+      timestamp: timestamp,
     };
 
+    // Generate Cloudinary signature
     const signature = cloudinary.utils.api_sign_request(
-      uploadParams,
+      paramsToSign,
       process.env.CLOUDINARY_API_SECRET!
     );
 
+    // Upload URL for videos
     const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload`;
-    
-    // The final video URL after upload
-    const videoUrl = cloudinary.url(uniqueFileName, {
-      resource_type: 'video',
-      type: 'upload',
+
+    // Params to send back
+    const uploadParams = {
+      api_key: process.env.CLOUDINARY_API_KEY!,
+      timestamp: timestamp,
+      signature: signature,
+      folder: "course-videos",
+      public_id: publicId,
+    };
+
+    console.log("Generated upload params:", {
+      timestamp,
+      publicId,
+      signature: signature.substring(0, 10) + "...",
     });
 
     res.status(200).json({
@@ -348,12 +357,8 @@ export const getUploadVideoUrl = async (
       message: "Video upload URL generated successfully",
       data: {
         uploadUrl,
-        videoUrl,
-        uploadParams: {
-          ...uploadParams,
-          api_key: process.env.CLOUDINARY_API_KEY,
-          signature,
-        },
+        uploadParams,
+        videoUrl: cloudinary.url(publicId, { resource_type: "video" }),
       },
     });
   } catch (error) {

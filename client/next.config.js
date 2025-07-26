@@ -6,7 +6,13 @@ const nextConfig = {
             hostname: 'images.pexels.com',
             port: "",
             pathname: '/**',
-        }]
+        },
+        {
+            protocol: 'https',
+            hostname: 'res.cloudinary.com',
+            port: "",
+            pathname: '/**',
+        }],
     }
 };
 module.exports = {
