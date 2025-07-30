@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 
+
 const CourseCard = ({ course, onGoToCourse }: CourseCardProps) => {
   return (
     <Card className="course-card group" onClick={() => onGoToCourse(course)}>
@@ -31,7 +32,7 @@ const CourseCard = ({ course, onGoToCourse }: CourseCardProps) => {
           <Avatar className="w-6 h-6">
             <AvatarImage alt={course.teacherName} />
             <AvatarFallback className="bg-secondary-700 text-black">
-              {course.teacherName[0]}
+              {course.teacherName}
             </AvatarFallback>
           </Avatar>
 

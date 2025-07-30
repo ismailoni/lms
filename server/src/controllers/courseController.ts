@@ -1,18 +1,15 @@
 import { Request, Response } from "express";
-import CourseModel from "../models/prisma/courseModel";
-import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
+
+import CourseModel from "../models/prisma/courseModel";
+import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
 import cloudinary from "../utils/cloudinary";
 
-export const listCourses = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const listCourses = async (req: Request, res: Response) => {
   const { category } = req.query;
   try {
     const courses = await CourseModel.findAll(category as string);
-
     res.status(200).json({
       success: true,
       message: "Courses retrieved successfully",
@@ -27,17 +24,12 @@ export const listCourses = async (
   }
 };
 
-export const getCourse = async (req: Request, res: Response): Promise<void> => {
+export const getCourse = async (req: Request, res: Response) => {
   const { courseId } = req.params;
-
   try {
     const course = await CourseModel.findById(courseId);
-
     if (!course) {
-      res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
+      res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
 
@@ -55,10 +47,7 @@ export const getCourse = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const createCourse = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const createCourse = async (req: Request, res: Response) => {
   try {
     const { teacherId, teacherName } = req.body;
 
@@ -78,18 +67,18 @@ export const createCourse = async (
       description: "",
       category: "Uncategorized",
       image: "",
-      price: 0,
+      price: 0, // dollars
       level: "Beginner",
       status: "Draft",
     });
 
-    // 💥 Create a TeacherEarnings record automatically
+    // Create TeacherEarnings placeholder
     await TeacherEarningsModel.create({
-      teacherId: teacherId,
+      teacherId,
       courseId: newCourse.courseId,
       title: newCourse.title,
       enrollCount: 0,
-      earnings: 0
+      earnings: 0,
     });
 
     res.status(200).json({
@@ -106,19 +95,16 @@ export const createCourse = async (
   }
 };
 
-export const updateCourse = async (req: Request, res: Response): Promise<void> => {
+export const updateCourse = async (req: Request, res: Response) => {
   const { courseId } = req.params;
-  const updateData = { ...req.body };
+  const updateData: any = { ...req.body };
   const { userId } = getAuth(req);
 
   try {
     const course = await CourseModel.findById(courseId);
 
     if (!course) {
-      res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
+      res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
 
@@ -134,24 +120,22 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
     if (req.file) {
       try {
         const uploadPromise = new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream(
-            {
-              resource_type: "image",
-              folder: "course-images",
-              transformation: [
-                { width: 1280, height: 720, crop: "fit" },
-                { quality: "auto", fetch_format: "auto" },
-              ],
-            },
-            (error, result) => {
-              if (error) {
-                console.error("Cloudinary upload error:", error);
-                reject(error);
-              } else {
-                resolve(result);
+          cloudinary.uploader
+            .upload_stream(
+              {
+                resource_type: "image",
+                folder: "course-images",
+                transformation: [
+                  { width: 1280, height: 720, crop: "fit" },
+                  { quality: "auto", fetch_format: "auto" },
+                ],
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
               }
-            }
-          ).end(req.file!.buffer);
+            )
+            .end(req.file!.buffer);
         });
 
         const uploadResult = (await uploadPromise) as any;
@@ -170,17 +154,14 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
       delete updateData.imageUrl;
     }
 
-    // Validate and convert price
+    // Validate and keep price as float (no * 100 since DB stores dollars)
     if (updateData.price !== undefined) {
       const price = Number(updateData.price);
       if (isNaN(price) || price < 0) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid price",
-        });
+        res.status(400).json({ success: false, message: "Invalid price" });
         return;
       }
-      updateData.price = price * 100;
+      updateData.price = price; // keep as dollars in DB
     }
 
     // Handle sections
@@ -191,13 +172,13 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
           : updateData.sections;
 
       updateData.sections = {
-        deleteMany: {}, // Delete existing sections
+        deleteMany: {}, // wipe old sections
         create: sectionsData.map((section: any) => ({
           sectionId: section.sectionId || uuidv4(),
           sectionTitle: section.sectionTitle,
           sectionDescription: section.sectionDescription,
           chapters: {
-            create: section.chapters.map((chapter: any) => ({
+          create: (section.chapters || []).map((chapter: any) => ({
               chapterId: chapter.chapterId || uuidv4(),
               title: chapter.title,
               content: chapter.content,
@@ -209,20 +190,19 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
       };
     }
 
-    // Update the course
     const updatedCourse = await CourseModel.update(courseId, updateData);
 
-    // If title changed, update TeacherEarnings title
+    // If title changed, sync TeacherEarnings title
     if (updateData.title) {
-      const earningsRecord = await TeacherEarningsModel.findByTeacherIdAndCourseId(
-        course.teacherId,
-        course.courseId
-      );
+      const earningsRecord =
+        await TeacherEarningsModel.findByTeacherIdAndCourseId(
+          course.teacherId,
+          course.courseId
+        );
 
       if (earningsRecord) {
         await TeacherEarningsModel.update(course.teacherId, course.courseId, {
           title: updateData.title,
-          // No updatedAt here — Prisma auto-updates it
         });
       }
     }
@@ -241,11 +221,7 @@ export const updateCourse = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-
-export const deleteCourse = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const deleteCourse = async (req: Request, res: Response) => {
   const { courseId } = req.params;
   const { userId } = getAuth(req);
 
@@ -253,10 +229,7 @@ export const deleteCourse = async (
     const course = await CourseModel.findById(courseId);
 
     if (!course) {
-      res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
+      res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
 
@@ -268,10 +241,7 @@ export const deleteCourse = async (
       return;
     }
 
-    // Delete the course (cascade will handle related records)
     await CourseModel.delete(courseId);
-
-    // Delete corresponding TeacherEarnings record
     await TeacherEarningsModel.delete(course.teacherId, course.courseId);
 
     res.status(200).json({
@@ -287,23 +257,15 @@ export const deleteCourse = async (
   }
 };
 
-export const getUploadVideoUrl = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getUploadVideoUrl = async (req: Request, res: Response) => {
   const { courseId, sectionId, chapterId } = req.params;
   const { fileName } = req.body;
   const { userId } = getAuth(req);
 
   try {
-    // Verify course ownership
     const course = await CourseModel.findById(courseId);
-
     if (!course) {
-      res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
+      res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
 
@@ -315,42 +277,29 @@ export const getUploadVideoUrl = async (
       return;
     }
 
-    // Correct timestamp
     const timestamp = Math.floor(Date.now() / 1000);
-
-    // Unique public_id for video
     const publicId = `videos/${courseId}/${sectionId}/${chapterId}/${timestamp}_${fileName}`;
 
-    // Parameters for signing (no resource_type)
     const paramsToSign = {
       folder: "course-videos",
       public_id: publicId,
-      timestamp: timestamp,
+      timestamp,
     };
 
-    // Generate Cloudinary signature
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,
       process.env.CLOUDINARY_API_SECRET!
     );
 
-    // Upload URL for videos
     const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload`;
 
-    // Params to send back
     const uploadParams = {
       api_key: process.env.CLOUDINARY_API_KEY!,
-      timestamp: timestamp,
-      signature: signature,
+      timestamp,
+      signature,
       folder: "course-videos",
       public_id: publicId,
     };
-
-    console.log("Generated upload params:", {
-      timestamp,
-      publicId,
-      signature: signature.substring(0, 10) + "...",
-    });
 
     res.status(200).json({
       success: true,

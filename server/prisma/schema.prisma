@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,142 +8,43 @@ datasource db {
 }
 
 model Course {
-  courseId    String   @id @default(uuid())
-  teacherId   String
-  teacherName String
-  teacherImage String?
-  title       String
-  description String?
-  category    String
-  image       String?
-  price       Float?
-  level       CourseLevel
-  status      CourseStatus
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  courseId       String             @id @default(uuid())
+  teacherId      String
+  teacherName    String
+  teacherImage   String?
+  title          String
+  description    String?
+  category       String
+  image          String?
+  price          Float?
+  level          CourseLevel
+  status         CourseStatus
+  sections       Json?              
+  enrollments    Json?              // Keep as Json for now to match existing data
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   // Relationships
-  sections              Section[]
-  enrollments           Enrollment[]
-  transactions          Transaction[]
-  userCourseProgress    UserCourseProgress[]
-  teacherEarnings       TeacherEarnings[]
+  transactions       Transaction[]
+  userCourseProgress UserCourseProgress[]
+  teacherEarnings    TeacherEarnings[]
 
   @@map("courses")
-}
-
-model Section {
-  sectionId          String  @id @default(uuid())
-  sectionTitle       String
-  sectionDescription String?
-  courseId           String
-  
-  // Relationships
-  course    Course    @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
-  chapters  Chapter[]
-
-  @@map("sections")
-}
-
-model Chapter {
-  chapterId String      @id @default(uuid())
-  type      ChapterType
-  title     String
-  content   String
-  video     String?
-  sectionId String
-
-  // Relationships
-  section  Section   @relation(fields: [sectionId], references: [sectionId], onDelete: Cascade)
-  comments Comment[]
-  chapterProgress ChapterProgress[]
-
-  @@map("chapters")
-}
-
-model Comment {
-  commentId String @id @default(uuid())
-  userId    String
-  text      String
-  timestamp String
-  chapterId String
-
-  // Relationships
-  chapter Chapter @relation(fields: [chapterId], references: [chapterId], onDelete: Cascade)
-
-  @@map("comments")
-}
-
-model Enrollment {
-  id       String @id @default(uuid())
-  userId   String
-  courseId String
-
-  // Relationships
-  course Course @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@map("enrollments")
-}
-
-model UserCourseProgress {
-  id                    String @id @default(uuid())
-  userId                String
-  courseId              String
-  enrollmentDate        String
-  overallProgress       Float
-  lastAccessedTimestamp String
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  // Relationships
-  course            Course            @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
-  sectionProgress   SectionProgress[]
-
-  @@unique([userId, courseId])
-  @@map("user_course_progress")
-}
-
-model SectionProgress {
-  id                   String @id @default(uuid())
-  sectionId            String
-  userCourseProgressId String
-
-  // Relationships
-  userCourseProgress UserCourseProgress @relation(fields: [userCourseProgressId], references: [id], onDelete: Cascade)
-  chapterProgress    ChapterProgress[]
-
-  @@unique([sectionId, userCourseProgressId])
-  @@map("section_progress")
-}
-
-model ChapterProgress {
-  id                String @id @default(uuid())
-  chapterId         String
-  completed         Boolean
-  sectionProgressId String
-
-  // Relationships
-  chapter         Chapter         @relation(fields: [chapterId], references: [chapterId], onDelete: Cascade)
-  sectionProgress SectionProgress @relation(fields: [sectionProgressId], references: [id], onDelete: Cascade)
-
-  @@unique([chapterId, sectionProgressId])
-  @@map("chapter_progress")
 }
 
 model Transaction {
   transactionId   String            @id @default(uuid())
   userId          String
-  dateTime        String
   courseId        String
   paymentProvider PaymentProvider
-  amount          Float?
+  amount          Float
+  dateTime        DateTime          @default(now())
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
-  // Relationships
   course Course @relation(fields: [courseId], references: [courseId])
 
+  @@unique([userId, courseId])
   @@map("transactions")
 }
 
@@ -155,14 +53,32 @@ model TeacherEarnings {
   teacherId   String
   courseId    String
   title       String?
-  enrollCount Int?
-  earnings    Float?
-  updatedAt   DateTime @updatedAt // Change from String? to DateTime
-  course      Course   @relation(fields: [courseId], references: [courseId])
+  enrollCount Int      @default(0)
+  earnings    Float    @default(0)
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [courseId])
+
   @@unique([teacherId, courseId])
   @@map("teacher_earnings")
 }
 
+model UserCourseProgress {
+  id                    String   @id @default(uuid())
+  userId                String
+  courseId              String
+  enrollmentDate        String
+  overallProgress       Float
+  lastAccessedTimestamp String
+  progressData          Json?    // Add this field back
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [courseId])
+
+  @@unique([userId, courseId])
+  @@map("user_course_progress")
+}
 
 enum CourseLevel {
   Beginner
@@ -173,12 +89,6 @@ enum CourseLevel {
 enum CourseStatus {
   Draft
   Published
-}
-
-enum ChapterType {
-  Text
-  Quiz
-  Video
 }
 
 enum PaymentProvider {

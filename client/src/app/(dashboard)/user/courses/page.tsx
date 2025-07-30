@@ -27,11 +27,15 @@ const Courses = () => {
     if (!courses) return [];
 
     return courses.filter((course) => {
-      const matchesSearch = course.title
+      // Add null checks for course.title
+      const title = course.title || "";
+      const category = course.category || "";
+
+      const matchesSearch = title
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
       const matchesCategory =
-        selectedCategory === "all" || course.category === selectedCategory;
+        selectedCategory === "all" || category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [courses, searchTerm, selectedCategory]);

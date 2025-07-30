@@ -37,17 +37,18 @@ declare global {
 
   interface Course {
     courseId: string;
-    teacherId: string;
-    teacherName: string;
-    teacherImage: string; // Optional, can be used for teacher profile image
     title: string;
     description?: string;
+    teacherName: string;
+    teacherId?: string;
     category: string;
+    price?: number;
     image?: string;
-    price?: number; // Stored in cents (e.g., 4999 for $49.99)
-    level: "Beginner" | "Intermediate" | "Advanced";
-    status: "Draft" | "Published";
-    sections: Section[];
+    level?: CourseLevel;
+    status?: CourseStatus;
+    overallProgress?: number;
+    lastAccessedTimestamp?: string;
+    sections?: Section[];
     enrollments?: Array<{
       userId: string;
     }>;
@@ -64,6 +65,11 @@ declare global {
     savePaymentMethod?: boolean;
   }
 
+  interface CourseCardProps {
+    course: Course;
+    onGoToCourse: (course: Course) => void;
+  }
+
   interface DateRange {
     from: string | undefined;
     to: string | undefined;
@@ -74,50 +80,15 @@ declare global {
     courseId: string;
     enrollmentDate: string;
     overallProgress: number;
-    sections: SectionProgress[];
     lastAccessedTimestamp: string;
-  }
-
-  type CreateUserArgs = Omit<User, "userId">;
-  type CreateCourseArgs = Omit<Course, "courseId">;
-  type CreateTransactionArgs = Omit<Transaction, "transactionId">;
-
-  interface CourseCardProps {
-    course: Course;
-    onGoToCourse: (course: Course) => void;
-  }
-
-  interface TeacherCourseCardProps {
-    course: Course;
-    onEdit: (course: Course) => void;
-    onDelete: (course: Course) => void;
-    isOwner: boolean;
-  }
-
-  interface Comment {
-    commentId: string;
-    userId: string;
-    text: string;
-    timestamp: string;
-  }
-
-  interface Chapter {
-    chapterId: string;
-    title: string;
-    content: string;
-    video?: string | File;
-    freePreview?: boolean;
-    type: "Text" | "Quiz" | "Video";
-  }
-
-  interface ChapterProgress {
-    chapterId: string;
-    completed: boolean;
+    sections: SectionProgress[];
+    course?: Course;
   }
 
   interface SectionProgress {
     sectionId: string;
-    chapters: ChapterProgress[];
+    completedChapters: string[];
+    completionPercentage: number;
   }
 
   interface Section {

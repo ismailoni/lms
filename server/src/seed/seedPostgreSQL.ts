@@ -23,8 +23,65 @@ const dataPath = (...p: string[]) => path.join(__dirname, "data", ...p);
 const readJSON = <T = any>(p: string): T =>
   JSON.parse(fs.readFileSync(p, "utf8"));
 
+// Enhanced safe array function with better validation
+function safeArray(value: any): any[] | null {
+  console.log(`    Validating array data:`, typeof value, Array.isArray(value));
+  
+  // Handle null/undefined
+  if (value === null || value === undefined) {
+    console.log(`    -> Returning null for null/undefined`);
+    return null;
+  }
+  
+  // Handle proper arrays
+  if (Array.isArray(value)) {
+    console.log(`    -> Valid array with ${value.length} items`);
+    return value.length > 0 ? value : null;
+  }
+  
+  // Handle strings that might be JSON
+  if (typeof value === 'string') {
+    if (value.trim() === '' || value === 'null' || value === 'undefined') {
+      console.log(`    -> Empty/null string, returning null`);
+      return null;
+    }
+    
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        console.log(`    -> Parsed JSON array with ${parsed.length} items`);
+        return parsed.length > 0 ? parsed : null;
+      } else {
+        console.log(`    -> Parsed JSON is not an array, returning null`);
+        return null;
+      }
+    } catch (error) {
+      console.log(`    -> Failed to parse JSON string, returning null`);
+      return null;
+    }
+  }
+  
+  // Handle objects that might be arrays
+  if (typeof value === 'object') {
+    // Check if it's an array-like object
+    if (value.hasOwnProperty('length') && typeof value.length === 'number') {
+      try {
+        const arrayValue = Array.from(value);
+        console.log(`    -> Converted array-like object to array with ${arrayValue.length} items`);
+        return arrayValue.length > 0 ? arrayValue : null;
+      } catch (error) {
+        console.log(`    -> Failed to convert array-like object, returning null`);
+        return null;
+      }
+    }
+  }
+  
+  console.log(`    -> Unhandled type, returning null`);
+  return null;
+}
+
 async function seedData() {
-  console.log("Seeding full data hierarchy...");
+  console.log("Seeding basic data...");
 
   const coursesRaw = readJSON<any[]>(dataPath("courses.json"));
   const transactionsRaw = readJSON<any[]>(dataPath("transactions.json"));
@@ -37,26 +94,33 @@ async function seedData() {
     TRUNCATE TABLE 
       "teacher_earnings", 
       "transactions", 
-      "chapter_progress", 
-      "section_progress", 
       "user_course_progress", 
-      "enrollments", 
-      "comments", 
-      "chapters", 
-      "sections", 
       "courses"
     RESTART IDENTITY CASCADE;
   `);
 
-  const pendingComments: Prisma.CommentCreateManyInput[] = [];
-  const pendingChapterProgress: Prisma.ChapterProgressCreateManyInput[] = [];
+  // Insert Courses with enhanced validation
+  console.log("Inserting courses...");
+  for (let i = 0; i < coursesRaw.length; i++) {
+    const course = coursesRaw[i];
+    
+    try {
+      console.log(`\nProcessing course ${i + 1}: ${course.title || 'No title'}`);
+      
+      // Log raw data for debugging
+      console.log(`  Raw sections:`, course.sections);
+      console.log(`  Raw enrollments:`, course.enrollments);
+      
+      // Safely parse sections and enrollments
+      const sections = safeArray(course.sections);
+      const enrollments = safeArray(course.enrollments);
+      
+      console.log(`  - Final Sections: ${sections ? sections.length : 0} items`);
+      console.log(`  - Final Enrollments: ${enrollments ? enrollments.length : 0} items`);
 
-  // --- Insert Courses → Sections → Chapters ---
-  console.log("Inserting courses, sections, chapters...");
-  for (const course of coursesRaw) {
-    const createdCourse = await prisma.course.create({
-      data: {
-        courseId: course.courseId, // Preserve the original courseId
+      // Create course data with explicit null handling
+      const courseData = {
+        courseId: course.courseId,
         teacherId: course.teacherId ?? course.teacher_id,
         teacherName: course.teacherName ?? course.teacher_name,
         teacherImage: course.teacherImage ?? course.teacher_image ?? null,
@@ -65,92 +129,106 @@ async function seedData() {
         category: course.category,
         image: course.image ?? null,
         price: course.price ?? null,
-        level: (course.level ?? "Beginner") as CourseLevel,
-        status: (course.status ?? "Published") as CourseStatus,
-      },
-    });
+        level: course.level,
+        status: course.status,
+        sections: sections ?? Prisma.JsonNull,
+        enrollments: enrollments ?? Prisma.JsonNull,
+      };
 
-    if (course.enrollments && course.enrollments.length > 0) {
-      for (const enrollment of course.enrollments) {
-        await prisma.enrollment.create({
+      console.log(`  Creating course with data:`, {
+        ...courseData,
+        sections: sections ? `Array(${sections.length})` : 'null',
+        enrollments: enrollments ? `Array(${enrollments.length})` : 'null'
+      });
+
+      await prisma.course.create({
+        data: courseData,
+      });
+      
+      console.log(`  ✅ Course ${i + 1} inserted successfully`);
+    } catch (error) {
+      console.error(`❌ Error inserting course ${i + 1}:`, error);
+      console.log("Full course data:", JSON.stringify(course, null, 2));
+      
+      // Try inserting with completely null sections and enrollments
+      console.log("Attempting to insert with null sections and enrollments...");
+      try {
+        await prisma.course.create({
           data: {
-            userId: enrollment.userId,
-            courseId: course.courseId, // Use the original courseId
+            courseId: course.courseId || `course-${i}`,
+            teacherId: course.teacherId ?? course.teacher_id ?? `teacher-${i}`,
+            teacherName: course.teacherName ?? course.teacher_name ?? `Teacher ${i}`,
+            teacherImage: null,
+            title: course.title || `Course ${i}`,
+            description: course.description ?? null,
+            category: course.category || "General",
+            image: null,
+            price: course.price ?? null,
+            level: "Beginner" as CourseLevel,
+            status: "Published" as CourseStatus,
+            sections: Prisma.JsonNull,
+            enrollments: Prisma.JsonNull,
           },
         });
-      }
-    }
-
-    if (Array.isArray(course.sections)) {
-      for (const sec of course.sections) {
-        const createdSection = await prisma.section.create({
-          data: {
-            // Remove sectionId to let Prisma auto-generate unique IDs
-            sectionTitle: sec.sectionTitle ?? sec.title,
-            sectionDescription:
-              sec.sectionDescription ?? sec.description ?? null,
-            courseId: createdCourse.courseId,
-          },
-        });
-
-        if (Array.isArray(sec.chapters)) {
-          for (const ch of sec.chapters) {
-            const createdChapter = await prisma.chapter.create({
-              data: {
-                // Remove chapterId to let Prisma auto-generate unique IDs
-                type: ch.type ?? "Text",
-                title: ch.title,
-                content: ch.content,
-                video: ch.video ?? null,
-                sectionId: createdSection.sectionId,
-              },
-            });
-
-            if (Array.isArray(ch.comments)) {
-              for (const c of ch.comments) {
-                pendingComments.push({
-                  userId: c.userId ?? c.user_id,
-                  text: c.text,
-                  timestamp: c.timestamp,
-                  chapterId: createdChapter.chapterId,
-                });
-              }
-            }
-          }
-        }
+        console.log(`  ✅ Course ${i + 1} inserted with fallback data`);
+      } catch (fallbackError) {
+        console.error(`❌ Fallback insertion also failed for course ${i + 1}:`, fallbackError);
+        throw fallbackError;
       }
     }
   }
 
-  // --- Insert Transactions ---
+  // Insert Transactions and update enrollments
   console.log("Inserting transactions...");
   if (transactionsRaw.length) {
-    await prisma.transaction.createMany({
-      data: transactionsRaw.map((t) => ({
-        userId: t.userId ?? t.user_id,
-        dateTime: t.dateTime ?? t.date_time,
-        courseId: t.courseId ?? t.course_id,
-        paymentProvider: (t.paymentProvider ?? "stripe") as PaymentProvider,
-        amount: t.amount ?? null,
-      })),
-      skipDuplicates: true,
-    });
+    for (const transaction of transactionsRaw) {
+      try {
+        // Create transaction
+        await prisma.transaction.create({
+          data: {
+            userId: transaction.userId ?? transaction.user_id,
+            dateTime: transaction.dateTime ?? transaction.date_time,
+            courseId: transaction.courseId ?? transaction.course_id,
+            paymentProvider: (transaction.paymentProvider ?? "stripe") as PaymentProvider,
+            amount: transaction.amount ?? 0,
+          },
+        });
+
+        // Add user to course enrollments
+        const courseId = transaction.courseId ?? transaction.course_id;
+        const userId = transaction.userId ?? transaction.user_id;
+
+        const course = await prisma.course.findUnique({
+          where: { courseId },
+        });
+
+        if (course) {
+          const currentEnrollments = safeArray(course.enrollments) || [];
+          if (!currentEnrollments.includes(userId)) {
+            currentEnrollments.push(userId);
+            await prisma.course.update({
+              where: { courseId },
+              data: { enrollments: currentEnrollments },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error processing transaction:", error);
+        console.log("Transaction data:", JSON.stringify(transaction, null, 2));
+        // Don't throw here, continue with other transactions
+      }
+    }
   }
 
+  // Generate teacher earnings
   console.log("Generating teacher earnings...");
-  // Calculate and insert teacher earnings based on transactions
   const transactions = await prisma.transaction.findMany({
-    include: {
-      course: true,
-    },
+    include: { course: true },
   });
 
-  // Group transactions by teacher and course
   const earningsMap = new Map();
-
   for (const transaction of transactions) {
     const key = `${transaction.course.teacherId}-${transaction.courseId}`;
-
     if (!earningsMap.has(key)) {
       earningsMap.set(key, {
         teacherId: transaction.course.teacherId,
@@ -160,74 +238,52 @@ async function seedData() {
         earnings: 0,
       });
     }
-
     const earnings = earningsMap.get(key);
     earnings.enrollCount += 1;
-    earnings.earnings += (transaction.amount || 0) * 0.7; // Assuming 70% commission to teacher
+    earnings.earnings += (transaction.amount || 0) * 0.7;
   }
 
-  // Insert teacher earnings
   for (const [key, earningsData] of earningsMap) {
-    await prisma.teacherEarnings.create({
-      data: {
-        teacherId: earningsData.teacherId,
-        courseId: earningsData.courseId,
-        title: earningsData.title,
-        enrollCount: earningsData.enrollCount,
-        earnings: Math.round(earningsData.earnings), // Round to nearest cent
-      },
-    });
-  }
-
-  console.log("Teacher earnings generated successfully!");
-
-  // --- Insert UserCourseProgress → SectionProgress (collect ChapterProgress) ---
-  console.log("Inserting user course progress...");
-  for (const ucp of userCourseProgressRaw) {
-    const createdUCP = await prisma.userCourseProgress.create({
-      data: {
-        userId: ucp.userId ?? ucp.user_id,
-        courseId: ucp.courseId ?? ucp.course_id,
-        enrollmentDate: ucp.enrollmentDate ?? ucp.enrollment_date,
-        overallProgress: ucp.overallProgress ?? ucp.overall_progress,
-        lastAccessedTimestamp:
-          ucp.lastAccessedTimestamp ?? ucp.last_accessed_timestamp,
-      },
-    });
-
-    if (Array.isArray(ucp.sectionProgress)) {
-      for (const sp of ucp.sectionProgress) {
-        const createdSP = await prisma.sectionProgress.create({
-          data: {
-            sectionId: sp.sectionId ?? sp.section_id,
-            userCourseProgressId: createdUCP.id,
-          },
-        });
-
-        if (Array.isArray(sp.chapterProgress)) {
-          for (const cp of sp.chapterProgress) {
-            pendingChapterProgress.push({
-              chapterId: cp.chapterId ?? cp.chapter_id,
-              completed: !!cp.completed,
-              sectionProgressId: createdSP.id,
-            });
-          }
-        }
-      }
+    try {
+      await prisma.teacherEarnings.create({
+        data: {
+          teacherId: earningsData.teacherId,
+          courseId: earningsData.courseId,
+          title: earningsData.title,
+          enrollCount: earningsData.enrollCount,
+          earnings: +earningsData.earnings.toFixed(2),
+        },
+      });
+    } catch (error) {
+      console.error("Error creating teacher earnings:", error);
     }
   }
 
-  // --- Bulk Inserts ---
-  console.log(
-    `Bulk inserting ${pendingComments.length} comments and ${pendingChapterProgress.length} chapter progress entries...`
-  );
+  // Insert UserCourseProgress
+  console.log("Inserting user course progress...");
+  for (const ucp of userCourseProgressRaw) {
+    try {
+      const progressData =
+        ucp.progressData && Object.keys(ucp.progressData).length > 0
+          ? ucp.progressData
+          : { sections: [] };
 
-  if (pendingComments.length) {
-    await prisma.comment.createMany({ data: pendingComments });
-  }
-
-  if (pendingChapterProgress.length) {
-    await prisma.chapterProgress.createMany({ data: pendingChapterProgress });
+      await prisma.userCourseProgress.create({
+        data: {
+          userId: ucp.userId ?? ucp.user_id,
+          courseId: ucp.courseId ?? ucp.course_id,
+          enrollmentDate: ucp.enrollmentDate ?? ucp.enrollment_date,
+          overallProgress: ucp.overallProgress ?? ucp.overall_progress,
+          lastAccessedTimestamp:
+            ucp.lastAccessedTimestamp ?? ucp.last_accessed_timestamp,
+          progressData: progressData,
+        },
+      });
+    } catch (error) {
+      console.error("Error inserting user course progress:", error);
+      console.log("Progress data:", JSON.stringify(ucp, null, 2));
+      // Don't throw here, continue with other progress records
+    }
   }
 
   console.log("Data seeded successfully!");

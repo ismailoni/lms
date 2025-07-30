@@ -212,7 +212,7 @@ export const api = createApi({
     }),
 
     getUserEnrolledCourses: build.query<Course[], string>({
-      query: (userId) => `users/${userId}/enrolled-courses`,
+      query: (userId) => `${userId}/enrolled-courses`,
       providesTags: ["Courses", "UserCourseProgress"],
     }),
 

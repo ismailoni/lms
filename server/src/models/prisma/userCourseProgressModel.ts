@@ -8,16 +8,18 @@ export interface CreateUserCourseProgressData {
   enrollmentDate: string;
   overallProgress: number;
   lastAccessedTimestamp: string;
+  progressData?: any;
 }
 
 export interface UpdateUserCourseProgressData {
   overallProgress?: number;
   lastAccessedTimestamp?: string;
+  progressData?: any;
 }
 
 export class UserCourseProgressModel {
   static async findAll() {
-    const userCourseProgress = await prisma.userCourseProgress.findMany({
+    return prisma.userCourseProgress.findMany({
       include: {
         course: {
           select: {
@@ -25,52 +27,25 @@ export class UserCourseProgressModel {
             teacherName: true,
             category: true
           }
-        },
-        sectionProgress: {
-          include: {
-            chapterProgress: true
-          }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
-
-    return userCourseProgress;
   }
 
   static async findByUserId(userId: string) {
-    const userCourseProgress = await prisma.userCourseProgress.findMany({
+    return prisma.userCourseProgress.findMany({
       where: { userId },
       include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
-        },
-        sectionProgress: {
-          include: {
-            chapterProgress: true
-          }
-        }
+        course: true,
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
-
-    return userCourseProgress;
   }
 
   static async findByUserIdAndCourseId(userId: string, courseId: string) {
-    const userCourseProgress = await prisma.userCourseProgress.findFirst({
-      where: { 
-        userId,
-        courseId 
-      },
+    return prisma.userCourseProgress.findFirst({
+      where: { userId, courseId },
       include: {
         course: {
           select: {
@@ -78,26 +53,20 @@ export class UserCourseProgressModel {
             teacherName: true,
             category: true
           }
-        },
-        sectionProgress: {
-          include: {
-            chapterProgress: true
-          }
         }
       }
     });
-
-    return userCourseProgress;
   }
 
   static async create(data: CreateUserCourseProgressData) {
-    const userCourseProgress = await prisma.userCourseProgress.create({
+    return prisma.userCourseProgress.create({
       data: {
         userId: data.userId,
         courseId: data.courseId,
         enrollmentDate: new Date(data.enrollmentDate).toISOString(),
         overallProgress: data.overallProgress,
-        lastAccessedTimestamp: new Date(data.lastAccessedTimestamp).toISOString()
+        lastAccessedTimestamp: new Date(data.lastAccessedTimestamp).toISOString(),
+        progressData: data.progressData || { sections: [] }
       },
       include: {
         course: {
@@ -109,68 +78,60 @@ export class UserCourseProgressModel {
         }
       }
     });
-
-    return userCourseProgress;
   }
 
   static async update(userId: string, courseId: string, data: UpdateUserCourseProgressData) {
     const updateData: any = {};
-    
-    if (data.overallProgress !== undefined) {
-      updateData.overallProgress = data.overallProgress;
-    }
+    if (data.overallProgress !== undefined) updateData.overallProgress = data.overallProgress;
     if (data.lastAccessedTimestamp !== undefined) {
-      updateData.lastAccessedTimestamp = new Date(data.lastAccessedTimestamp);
+      updateData.lastAccessedTimestamp = new Date(data.lastAccessedTimestamp).toISOString();
     }
+    if (data.progressData !== undefined) updateData.progressData = data.progressData;
+    
+    if (Object.keys(updateData).length === 0) throw new Error('No fields to update');
 
-    if (Object.keys(updateData).length === 0) {
-      throw new Error('No fields to update');
-    }
-
-    const userCourseProgress = await prisma.userCourseProgress.updateMany({
-      where: { 
-        userId,
-        courseId 
-      },
+    return prisma.userCourseProgress.updateMany({
+      where: { userId, courseId },
       data: updateData
     });
-
-    return userCourseProgress;
   }
 
-  static async createSectionProgress(userCourseProgressId: string, sectionId: string) {
-    const sectionProgress = await prisma.sectionProgress.create({
-      data: {
-        sectionId,
-        userCourseProgressId
-      }
-    });
+  static async updateSectionProgress(userId: string, courseId: string, sectionId: string, chapters: any[]) {
+    const progress = await this.findByUserIdAndCourseId(userId, courseId);
+    if (!progress) throw new Error('Progress not found');
 
-    return sectionProgress;
+    const progressData = (progress.progressData as any) || { sections: [] };
+    const sectionIndex = progressData.sections.findIndex((s: any) => s.sectionId === sectionId);
+    
+    if (sectionIndex >= 0) {
+      progressData.sections[sectionIndex].chapters = chapters;
+    } else {
+      progressData.sections.push({ sectionId, chapters });
+    }
+
+    return this.update(userId, courseId, { progressData });
   }
 
-  static async createChapterProgress(sectionProgressId: string, chapterId: string, completed: boolean = false) {
-    const chapterProgress = await prisma.chapterProgress.create({
-      data: {
-        chapterId,
-        completed,
-        sectionProgressId
-      }
-    });
+  static async updateChapterProgress(userId: string, courseId: string, sectionId: string, chapterId: string, completed: boolean) {
+    const progress = await this.findByUserIdAndCourseId(userId, courseId);
+    if (!progress) throw new Error('Progress not found');
 
-    return chapterProgress;
-  }
+    const progressData = (progress.progressData as any) || { sections: [] };
+    let section = progressData.sections.find((s: any) => s.sectionId === sectionId);
+    
+    if (!section) {
+      section = { sectionId, chapters: [] };
+      progressData.sections.push(section);
+    }
 
-  static async updateChapterProgress(chapterId: string, sectionProgressId: string, completed: boolean) {
-    const chapterProgress = await prisma.chapterProgress.updateMany({
-      where: { 
-        chapterId,
-        sectionProgressId 
-      },
-      data: { completed }
-    });
+    const chapterIndex = section.chapters.findIndex((c: any) => c.chapterId === chapterId);
+    if (chapterIndex >= 0) {
+      section.chapters[chapterIndex].completed = completed;
+    } else {
+      section.chapters.push({ chapterId, completed });
+    }
 
-    return chapterProgress;
+    return this.update(userId, courseId, { progressData });
   }
 }
 

@@ -1,22 +1,135 @@
 import { Request, Response } from "express";
+import { getAuth } from "@clerk/express";
 import TransactionModel from "../models/prisma/transactionModel";
 import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
 import CourseModel from "../models/prisma/courseModel";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-02-24.acacia",
 });
 
+// Utility function for sanitization
+function cleanString(value: string): string {
+  return value ? value.replace(/\0/g, "") : value;
+}
+
+// ---------------------------------
+// Create PaymentIntent
+// ---------------------------------
+export const createStripePaymentIntent = async (req: Request, res: Response) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Authentication required" });
+    }
+
+    const { courseId } = req.body;
+    if (!courseId) {
+      return res.status(400).json({ success: false, message: "courseId is required" });
+    }
+
+    const course = await CourseModel.findById(courseId);
+    if (!course || !course.price) {
+      return res.status(404).json({ success: false, message: "Course not found or invalid price" });
+    }
+
+    // Check if user is already enrolled
+    const enrollments = (course.enrollments as string[]) || [];
+    if (enrollments.includes(userId)) {
+      return res.status(409).json({ success: false, message: "Already enrolled in this course" });
+    }
+
+    const amountInCents = Math.round(course.price * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: "usd",
+      automatic_payment_methods: { enabled: true },
+      metadata: { userId, courseId },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment intent created",
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.error("Payment intent error:", error);
+    return res.status(500).json({ success: false, message: "Failed to create payment intent" });
+  }
+};
+
+// ---------------------------------
+// Create Transaction
+// ---------------------------------
 export const createTransaction = async (req: Request, res: Response): Promise<void> => {
   try {
-    const transactionData = req.body;
-    
-    // Create the transaction
-    const transaction = await TransactionModel.create(transactionData);
-    
-    // Update teacher earnings automatically
-    await updateTeacherEarnings(transactionData.courseId, transactionData.amount || 0);
+    const { userId } = getAuth(req);
+    let { courseId } = req.body;
+
+    // Sanitize and validate inputs
+    const safeUserId = cleanString(userId || "");
+    courseId = cleanString(courseId || "");
+
+    if (!safeUserId) {
+      res.status(401).json({ success: false, message: "User authentication required" });
+      return;
+    }
+
+    if (!courseId) {
+      res.status(400).json({ success: false, message: "courseId is required" });
+      return;
+    }
+
+    // Fetch and validate course
+    const course = await CourseModel.findById(courseId);
+    if (!course || !course.price) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+
+    // Check if user is already enrolled (handle null enrollments)
+    const enrollments = course.enrollments || []; // Handle null case
+    if (enrollments.includes(safeUserId)) {
+      res.status(409).json({ success: false, message: "Already enrolled in this course" });
+      return;
+    }
+
+    // Check for existing transaction
+    const existingTransaction = await TransactionModel.findByUserIdAndCourseId(safeUserId, courseId);
+    if (existingTransaction) {
+      res.status(409).json({ success: false, message: "Transaction already exists for this course" });
+      return;
+    }
+
+    // Sanitize course fields
+    course.title = cleanString(course.title);
+    course.teacherName = cleanString(course.teacherName);
+    course.teacherId = cleanString(course.teacherId);
+
+    const amount = course.price;
+
+    // Create transaction
+    const transaction = await TransactionModel.create({
+      userId: safeUserId,
+      courseId,
+      amount,
+      paymentProvider: "stripe",
+    });
+
+    console.log("Transaction created successfully:", transaction);
+
+    // Add user to course enrollments
+    try {
+      await CourseModel.addEnrollment(courseId, safeUserId);
+      console.log("User added to course enrollments successfully");
+    } catch (enrollmentError) {
+      console.warn("Failed to add user to enrollments, but transaction succeeded:", enrollmentError);
+    }
+
+    // Update teacher earnings
+    await updateTeacherEarnings(courseId, amount);
 
     res.status(201).json({
       success: true,
@@ -24,6 +137,7 @@ export const createTransaction = async (req: Request, res: Response): Promise<vo
       data: transaction,
     });
   } catch (error) {
+    console.error("Error creating transaction:", error);
     res.status(500).json({
       success: false,
       message: "Error creating transaction",
@@ -32,10 +146,13 @@ export const createTransaction = async (req: Request, res: Response): Promise<vo
   }
 };
 
+// ---------------------------------
+// List Transactions
+// ---------------------------------
 export const listTransaction = async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req.query;
   try {
-    const transactions = userId 
+    const { userId } = req.query;
+    const transactions = userId
       ? await TransactionModel.findByUserId(userId as string)
       : await TransactionModel.findAll();
 
@@ -45,171 +162,49 @@ export const listTransaction = async (req: Request, res: Response): Promise<void
       data: transactions,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
+    console.error("Error fetching transactions:", error);
+    res.status(500).json({ 
+      success: false, 
       message: "Error fetching transactions",
-      error: (error as Error).message,
+      error: (error as Error).message 
     });
   }
 };
 
-// This should be in your server-side transaction controller
-export const createStripePaymentIntent = async (req: Request, res: Response): Promise<void> => {
+// ---------------------------------
+// Helper: Update Teacher Earnings
+// ---------------------------------
+export async function updateTeacherEarnings(courseId: string, transactionAmount: number): Promise<void> {
   try {
-    const { amount, courseId, userId } = req.body;
-
-    console.log("Received payment intent request:", { amount, courseId, userId });
-
-    // Validate amount
-    if (!amount || typeof amount !== 'number') {
-      res.status(400).json({ success: false, message: "Amount must be a valid number" });
-      return;
-    }
-
-    if (amount <= 0) {
-      res.status(400).json({ success: false, message: "Amount must be greater than 0" });
-      return;
-    }
-
-    if (!courseId || !userId) {
-      res.status(400).json({ success: false, message: "courseId and userId are required" });
-      return;
-    }
-
-    // Convert amount to cents
-    const amountInCents = Math.round(amount * 100);
-    console.log(`Converted amount to cents: ${amountInCents}`);
-
-    // Create PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: "usd",
-      automatic_payment_methods: { enabled: true },
-      metadata: { courseId, userId },
-    });
-
-    console.log("PaymentIntent created:", paymentIntent.id);
-
-    res.status(200).json({
-      success: true,
-      message: "Payment intent created successfully",
-      data: { clientSecret: paymentIntent.client_secret },
-    });
-  } catch (error) {
-    console.error("Error creating payment intent:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error creating payment intent",
-      error: (error as Error).message,
-    });
-  }
-};
-
-
-// Helper function to update teacher earnings
-async function updateTeacherEarnings(courseId: string, transactionAmount: number): Promise<void> {
-  try {
-    // Get course details to find the teacher
-    const course = await CourseModel.findById(courseId);
-    
+    const course = await CourseModel.findById(cleanString(courseId));
     if (!course) {
       console.error(`Course not found: ${courseId}`);
       return;
     }
 
-    // Calculate teacher's 70% commission
-    const teacherEarning = Math.round(transactionAmount * 0.7);
-    
-    // Check if teacher earnings record exists
-    const existingEarnings = await TeacherEarningsModel.findByTeacherIdAndCourseId(
-      course.teacherId, 
-      courseId
-    );
-    
+    const teacherId = cleanString(course.teacherId);
+    const title = cleanString(course.title);
+    const teacherEarning = +(transactionAmount * 0.7).toFixed(2);
+
+    const existingEarnings = await TeacherEarningsModel.findByTeacherIdAndCourseId(teacherId, courseId);
+
     if (existingEarnings) {
-      // Update existing record
-      await TeacherEarningsModel.update(course.teacherId, courseId, {
+      await TeacherEarningsModel.update(teacherId, courseId, {
         enrollCount: (existingEarnings.enrollCount || 0) + 1,
-        earnings: (existingEarnings.earnings || 0) + teacherEarning,
+        earnings: +((existingEarnings.earnings || 0) + teacherEarning).toFixed(2),
       });
-      
-      console.log(`Updated earnings for teacher ${course.teacherId}, course ${courseId}: +$${teacherEarning/100}`);
+      console.log(`Updated earnings for teacher ${teacherId}: +$${teacherEarning}`);
     } else {
-      // Create new record
       await TeacherEarningsModel.create({
-        teacherId: course.teacherId,
-        courseId: courseId,
-        title: course.title,
+        teacherId,
+        courseId,
+        title,
         enrollCount: 1,
-        earnings: teacherEarning
+        earnings: teacherEarning,
       });
-      
-      console.log(`Created new earnings record for teacher ${course.teacherId}, course ${courseId}: $${teacherEarning/100}`);
+      console.log(`Created earnings record for teacher ${teacherId}: $${teacherEarning}`);
     }
   } catch (error) {
-    console.error('Error updating teacher earnings:', error);
-    // Don't throw error - we don't want to fail the transaction if earnings update fails
+    console.error("Error updating teacher earnings:", error);
   }
 }
-
-// Stripe webhook handler for production payments
-export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const sig = req.headers['stripe-signature'] as string;
-    
-    if (!sig) {
-      res.status(400).json({
-        success: false,
-        message: "Missing stripe signature",
-      });
-      return;
-    }
-
-    const event = stripe.webhooks.constructEvent(
-      req.body, 
-      sig, 
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
-    
-    console.log(`Received Stripe webhook: ${event.type}`);
-    
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const { courseId, userId } = paymentIntent.metadata;
-      
-      if (!courseId || !userId) {
-        console.error('Missing metadata in payment intent:', paymentIntent.metadata);
-        res.status(400).json({
-          success: false,
-          message: "Missing courseId or userId in payment metadata",
-        });
-        return;
-      }
-
-      // Create transaction record
-      const transactionData = {
-        userId,
-        courseId,
-        amount: paymentIntent.amount / 100, // Convert back from cents
-        dateTime: new Date().toISOString(),
-        paymentProvider: 'stripe' as const
-      };
-
-      const transaction = await TransactionModel.create(transactionData);
-      
-      // Update teacher earnings automatically
-      await updateTeacherEarnings(courseId, transactionData.amount);
-      
-      console.log(`Payment successful: ${paymentIntent.id}, Transaction created: ${transaction}`);
-    }
-    
-    res.status(200).json({ received: true });
-  } catch (error) {
-    console.error('Stripe webhook error:', error);
-    res.status(400).json({
-      success: false,
-      message: "Webhook error",
-      error: (error as Error).message,
-    });
-  }
-};

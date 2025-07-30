@@ -1,133 +1,105 @@
 import { PrismaClient } from '@prisma/client';
-
 const prisma = new PrismaClient();
 
 export interface CreateTransactionData {
   userId: string;
-  dateTime: string;
   courseId: string;
   paymentProvider: 'stripe';
-  amount?: number;
+  amount: number;
+}
+
+// Extremely simple sanitization - only keep safe characters
+function sanitizeString(value: string): string {
+  if (!value || typeof value !== 'string') return '';
+  
+  const cleaned = value.replace(/[^a-zA-Z0-9\-_]/g, '');
+  console.log(`Sanitized: "${value}" -> "${cleaned}"`);
+  return cleaned;
 }
 
 export class TransactionModel {
   static async findAll() {
-    const transactions = await prisma.transaction.findMany({
+    return prisma.transaction.findMany({
       include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
-        }
+        course: { select: { title: true, teacherName: true, category: true } }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
-
-    return transactions;
   }
 
   static async findByUserId(userId: string) {
-    const transactions = await prisma.transaction.findMany({
-      where: { userId },
+    const cleanUserId = sanitizeString(userId);
+    console.log('Finding transactions for userId:', cleanUserId);
+    
+    return prisma.transaction.findMany({
+      where: { userId: cleanUserId },
       include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
-        }
+        course: { select: { title: true, teacherName: true, category: true } }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
-
-    return transactions;
   }
 
-  static async findByCourseId(courseId: string) {
-    const transactions = await prisma.transaction.findMany({
-      where: { courseId },
-      include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
+  static async findByUserIdAndCourseId(userId: string, courseId: string) {
+    const cleanUserId = sanitizeString(userId);
+    const cleanCourseId = sanitizeString(courseId);
+    
+    return prisma.transaction.findFirst({ 
+      where: { 
+        userId: cleanUserId, 
+        courseId: cleanCourseId 
+      } 
     });
+  }
 
-    return transactions;
+  static async createSimpleTest() {
+    console.log("Creating hardcoded test transaction...");
+    const payload = {
+      userId: "testuser123",
+      courseId: "testcourse123",
+      paymentProvider: "stripe" as const,
+      amount: 99.99,
+    };
+    console.log("Hardcoded test payload:", payload);
+    return prisma.transaction.create({ data: payload });
   }
 
   static async create(data: CreateTransactionData) {
-    const transaction = await prisma.transaction.create({
-      data: {
-        userId: data.userId,
-        dateTime: new Date(data.dateTime).toISOString(),
-        courseId: data.courseId,
-        paymentProvider: data.paymentProvider,
-        amount: data.amount
-      },
-      include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
-        }
-      }
+    const cleanUserId = sanitizeString(data.userId);
+    const cleanCourseId = sanitizeString(data.courseId);
+    
+    console.log('Sanitization results:', { 
+      original: { userId: data.userId, courseId: data.courseId },
+      cleaned: { userId: cleanUserId, courseId: cleanCourseId }
     });
+    
+    if (!cleanUserId || cleanUserId.length < 3) {
+      throw new Error(`Invalid userId: "${data.userId}" -> "${cleanUserId}"`);
+    }
+    
+    if (!cleanCourseId || cleanCourseId.length < 3) {
+      throw new Error(`Invalid courseId: "${data.courseId}" -> "${cleanCourseId}"`);
+    }
 
-    return transaction;
-  }
+    const payload = {
+      userId: cleanUserId,
+      courseId: cleanCourseId,
+      paymentProvider: data.paymentProvider,
+      amount: Number(data.amount),
+    };
 
-  static async findById(transactionId: string) {
-    const transaction = await prisma.transaction.findUnique({
-      where: { transactionId },
-      include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
-        }
-      }
-    });
+    console.log("Final create payload:", payload);
 
-    return transaction;
-  }
-
-  // Method to create transaction with specific transactionId (for compatibility)
-  static async createWithId(transactionId: string, data: CreateTransactionData) {
+    // Simple create without complex transaction
     const transaction = await prisma.transaction.create({
-      data: {
-        transactionId,
-        userId: data.userId,
-        dateTime: new Date(data.dateTime).toISOString(),
-        courseId: data.courseId,
-        paymentProvider: data.paymentProvider,
-        amount: data.amount
-      },
+      data: payload,
       include: {
-        course: {
-          select: {
-            title: true,
-            teacherName: true,
-            category: true
-          }
+        course: { 
+          select: { 
+            title: true, 
+            teacherName: true, 
+            category: true 
+          } 
         }
       }
     });

@@ -64,9 +64,16 @@ const StripeProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           setError("Failed to create payment intent.");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to create payment intent:", err);
-        setError(err?.data?.message || "Failed to initialize payment.");
+        
+        // Type guard to safely access error properties
+        if (err && typeof err === 'object' && 'data' in err) {
+          const error = err as { data?: { message?: string } };
+          setError(error.data?.message || "Failed to initialize payment.");
+        } else {
+          setError("Failed to initialize payment.");
+        }
       }
     };
 
