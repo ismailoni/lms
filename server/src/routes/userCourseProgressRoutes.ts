@@ -10,12 +10,12 @@ import {
 const router = express.Router();
 
 // Course access and enrollment routes
-router.get('/users/:userId/courses/:courseId/access', checkCourseAccess);
-router.get('/users/:userId/enrolled-courses', getUserEnrolledCourses);
+router.get('/:userId/courses/:courseId/access', checkCourseAccess);
+router.get('/:userId/enrolled-courses', getUserEnrolledCourses);
 
 // Progress tracking routes
-router.get('/users/:userId/courses/:courseId/progress', getUserCourseProgress);
-router.put('/users/:userId/courses/:courseId/progress', updateUserCourseProgress);
-router.put('/users/:userId/courses/:courseId/sections/:sectionId/chapters/:chapterId/progress', updateChapterProgress);
+router.get('/:userId/courses/:courseId', getUserCourseProgress);
+router.put('/:userId/courses/:courseId', updateUserCourseProgress);
+router.put('/:userId/courses/:courseId/sections/:sectionId/chapters/:chapterId', updateChapterProgress);
 
 export default router;

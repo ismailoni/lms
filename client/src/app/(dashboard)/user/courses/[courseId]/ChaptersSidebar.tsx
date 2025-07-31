@@ -34,7 +34,7 @@ const ChaptersSidebar = () => {
 
   if (isLoading) return <Loading />;
   if (!user) return <div>Please sign in to view course progress.</div>;
-  if (!course || !userProgress) return <div>Error loading course content.</div>;
+  if (!userProgress) return <div>Error loading course content.</div>;
 
   const toggleSection = (sectionTitle: string) => {
     setExpandedSections((prev) =>
@@ -200,10 +200,7 @@ const ProgressVisuals = ({
   totalChapters,
 }: {
   chapters: { chapterId: string; title: string; type: string }[];
-  sectionProgress?: {
-    sectionId: string;
-    chapters: { chapterId: string; completed: boolean }[];
-  };
+  sectionProgress?: SectionProgress;
   completedChapters: number;
   totalChapters: number;
 }) => {

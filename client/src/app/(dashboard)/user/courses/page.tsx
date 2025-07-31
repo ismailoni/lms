@@ -53,10 +53,16 @@ const Courses = () => {
           scroll: false,
         }
       );
+      console.log(course.sections);
+      console.log(course.sections?.length);
     } else {
-      router.push(`/user/courses/${course.courseId}`, {
+      router.push(`/user/courses/`, {
         scroll: false,
-      });
+      }
+    );
+    console.log(course.sections);
+    console.log(course.sections?.length);
+    // console.log(course.sections[0].chapters.length)
     }
   };
 
