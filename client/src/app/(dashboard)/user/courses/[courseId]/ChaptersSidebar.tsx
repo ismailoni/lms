@@ -51,11 +51,11 @@ const ChaptersSidebar = () => {
   return (
     <div ref={sidebarRef} className="chapters-sidebar">
       <div className="chapters-sidebar__header">
-        <h2 className="chapters-sidebar__title">{course.title}</h2>
+        <h2 className="chapters-sidebar__title">{course?.title}</h2>
         <hr className="chapters-sidebar__divider" />
       </div>
 
-      {course.sections.map((section, index) => {
+      {course?.sections?.map((section, index) => {
         const sectionProgress = userProgress.sections.find(s => s.sectionId === section.sectionId);
         const completedChapters = sectionProgress?.chapters.filter(c => c.completed).length ?? 0;
 

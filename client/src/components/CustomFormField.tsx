@@ -58,6 +58,8 @@ interface FormFieldProps {
   multiple?: boolean;
   isIcon?: boolean;
   initialValue?: string | number | boolean | string[];
+  rows?: number; // Add this line
+  helperText?: string; // Also add this for the helper text you used
 }
 
 export const CustomFormField: React.FC<FormFieldProps> = ({
@@ -74,6 +76,8 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
   multiple = false,
   isIcon = false,
   initialValue,
+  rows, // Add this parameter
+  helperText, // Add this parameter
 }) => {
   const { control } = useFormContext();
 
@@ -86,7 +90,7 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
           <Textarea
             placeholder={placeholder}
             {...field}
-            rows={3}
+            rows={rows || 3} // Use the rows prop with a default fallback
             className={`border-none bg-customgreys-darkGrey p-4 ${inputClassName}`}
           />
         );
@@ -216,6 +220,9 @@ export const CustomFormField: React.FC<FormFieldProps> = ({
             })}
           </FormControl>
           <FormMessage className="text-red-400" />
+          {helperText && (
+            <p className="text-sm text-gray-500 mt-1">{helperText}</p>
+          )}
         </FormItem>
       )}
     />

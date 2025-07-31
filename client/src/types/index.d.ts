@@ -37,21 +37,21 @@ declare global {
 
   interface Course {
     courseId: string;
+    teacherId: string;
+    teacherName: string;
     title: string;
     description?: string;
-    teacherName: string;
-    teacherId?: string;
     category: string;
-    price?: number;
     image?: string;
-    level?: CourseLevel;
-    status?: CourseStatus;
-    overallProgress?: number;
-    lastAccessedTimestamp?: string;
-    sections?: Section[];
+    price?: number; // Stored in cents (e.g., 4999 for $49.99)
+    level: "Beginner" | "Intermediate" | "Advanced";
+    status: "Draft" | "Published";
+    sections: Section[];
     enrollments?: Array<{
       userId: string;
     }>;
+    createdAt: string; // Add this line
+    updatedAt?: string; // Optional: also add updatedAt for completeness
   }
 
   interface Transaction {
@@ -59,15 +59,12 @@ declare global {
     transactionId: string;
     dateTime: string;
     courseId: string;
+    courseTitle: string;
     paymentProvider: "stripe";
+    status: "pending" | "completed" | "failed";
     paymentMethodId?: string;
     amount: number; // Stored in cents
     savePaymentMethod?: boolean;
-  }
-
-  interface CourseCardProps {
-    course: Course;
-    onGoToCourse: (course: Course) => void;
   }
 
   interface DateRange {
@@ -80,15 +77,51 @@ declare global {
     courseId: string;
     enrollmentDate: string;
     overallProgress: number;
-    lastAccessedTimestamp: string;
     sections: SectionProgress[];
-    course?: Course;
+    lastAccessedTimestamp: string;
+  }
+
+  type CreateUserArgs = Omit<User, "userId">;
+  type CreateCourseArgs = Omit<Course, "courseId">;
+  type CreateTransactionArgs = Omit<Transaction, "transactionId">;
+
+  interface CourseCardProps {
+    course: Course;
+    onGoToCourse: (course: Course) => void;
+  }
+
+  interface TeacherCourseCardProps {
+    course: Course;
+    onEdit: (course: Course) => void;
+    onDelete: (course: Course) => Promise<void>;
+    isOwner: boolean;
+    viewMode?: 'grid' | 'list'; // Add this line
+  }
+
+  interface Comment {
+    commentId: string;
+    userId: string;
+    text: string;
+    timestamp: string;
+  }
+
+  interface Chapter {
+    chapterId: string;
+    title: string;
+    content: string;
+    video?: string | File;
+    freePreview?: boolean;
+    type: "Text" | "Quiz" | "Video";
+  }
+
+  interface ChapterProgress {
+    chapterId: string;
+    completed: boolean;
   }
 
   interface SectionProgress {
     sectionId: string;
-    completedChapters: string[];
-    completionPercentage: number;
+    chapters: ChapterProgress[];
   }
 
   interface Section {
@@ -177,7 +210,7 @@ declare global {
     courseCategory: string;
     coursePrice: string;
     courseStatus: boolean;
-    courseImage?: File | string;
+    courseImage: string | null;
   }
 }
 
