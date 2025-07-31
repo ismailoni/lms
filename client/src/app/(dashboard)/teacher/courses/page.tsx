@@ -171,16 +171,30 @@ const Courses = () => {
 
   if (isLoading) {
     return (
-      <Loading />
+      <div className="min-h-screen bg-gray-900">
+        <div className="animate-pulse p-6">
+          <div className="h-8 bg-gray-800 rounded w-1/3 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="h-20 bg-gray-800 rounded-lg"></div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-80 bg-gray-800 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 
   if (isError || !courses) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Alert className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <Alert className="max-w-md bg-red-900/50 border-red-700">
+          <AlertCircle className="h-4 w-4 text-red-300" />
+          <AlertDescription className="text-red-300">
             Error loading courses. Please try again later.
           </AlertDescription>
         </Alert>
@@ -189,17 +203,17 @@ const Courses = () => {
   }
 
   return (
-    <div className='teacher-courses min-h-screen bg-gray-50 dark:bg-gray-900'>
+    <div className='teacher-courses min-h-screen bg-gray-900'>
       {/* Enhanced Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-gray-800 border-b border-gray-700">
         <div className="px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-primary-600" />
+              <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
+                <BookOpen className="w-6 h-6 text-blue-400" />
                 My Courses
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-gray-400 mt-1">
                 Create and manage your educational content
               </p>
             </div>
@@ -207,7 +221,7 @@ const Courses = () => {
             <Button
               onClick={handleCreateCourse}
               disabled={isCreating}
-              className="bg-primary-600 hover:bg-primary-700 gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >
               {isCreating ? (
                 <>
@@ -225,61 +239,61 @@ const Courses = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
-            <Card>
+            <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  <BookOpen className="w-4 h-4 text-blue-400" />
                   <div>
-                    <p className="text-2xl font-bold">{stats.total}</p>
-                    <p className="text-xs text-gray-500">Total Courses</p>
+                    <p className="text-2xl font-bold text-gray-100">{stats.total}</p>
+                    <p className="text-xs text-gray-400">Total Courses</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
                   <div>
-                    <p className="text-2xl font-bold">{stats.published}</p>
-                    <p className="text-xs text-gray-500">Published</p>
+                    <p className="text-2xl font-bold text-gray-100">{stats.published}</p>
+                    <p className="text-xs text-gray-400">Published</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-yellow-600" />
+                  <Clock className="w-4 h-4 text-yellow-400" />
                   <div>
-                    <p className="text-2xl font-bold">{stats.draft}</p>
-                    <p className="text-xs text-gray-500">Draft</p>
+                    <p className="text-2xl font-bold text-gray-100">{stats.draft}</p>
+                    <p className="text-xs text-gray-400">Draft</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-purple-600" />
+                  <Users className="w-4 h-4 text-purple-400" />
                   <div>
-                    <p className="text-2xl font-bold">{stats.totalStudents}</p>
-                    <p className="text-xs text-gray-500">Students</p>
+                    <p className="text-2xl font-bold text-gray-100">{stats.totalStudents}</p>
+                    <p className="text-xs text-gray-400">Students</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-green-600" />
+                  <DollarSign className="w-4 h-4 text-green-400" />
                   <div>
-                    <p className="text-2xl font-bold">${stats.totalRevenue}</p>
-                    <p className="text-xs text-gray-500">Revenue</p>
+                    <p className="text-2xl font-bold text-gray-100">${stats.totalRevenue}</p>
+                    <p className="text-xs text-gray-400">Revenue</p>
                   </div>
                 </div>
               </CardContent>
@@ -289,7 +303,7 @@ const Courses = () => {
       </div>
 
       {/* Enhanced Filters and Search */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -298,20 +312,24 @@ const Courses = () => {
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-blue-400"
             />
           </div>
 
           <div className="flex items-center gap-3">
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="w-4 h-4 mr-2" />
+              <SelectTrigger className="w-[180px] bg-gray-700 border-gray-600 text-gray-100">
+                <Filter className="w-4 h-4 mr-2 text-gray-400" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-800 border-gray-600">
                 {CATEGORY_OPTIONS.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
+                  <SelectItem 
+                    key={category.value} 
+                    value={category.value}
+                    className="text-gray-300 focus:bg-gray-700 focus:text-gray-100"
+                  >
                     <span className="flex items-center gap-2">
                       <span>{category.icon}</span>
                       {category.label}
@@ -323,13 +341,17 @@ const Courses = () => {
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-[150px]">
-                <SortAsc className="w-4 h-4 mr-2" />
+              <SelectTrigger className="w-[150px] bg-gray-700 border-gray-600 text-gray-100">
+                <SortAsc className="w-4 h-4 mr-2 text-gray-400" />
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-800 border-gray-600">
                 {SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value}
+                    className="text-gray-300 focus:bg-gray-700 focus:text-gray-100"
+                  >
                     {option.label}
                   </SelectItem>
                 ))}
@@ -337,12 +359,16 @@ const Courses = () => {
             </Select>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center border rounded-lg p-1">
+            <div className="flex items-center bg-gray-700 border border-gray-600 rounded-lg p-1">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="px-3 py-1"
+                className={`px-3 py-1 ${
+                  viewMode === 'grid' 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'text-gray-300 hover:bg-gray-600 hover:text-gray-100'
+                }`}
               >
                 <Grid3X3 className="w-4 h-4" />
               </Button>
@@ -350,7 +376,11 @@ const Courses = () => {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="px-3 py-1"
+                className={`px-3 py-1 ${
+                  viewMode === 'list' 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'text-gray-300 hover:bg-gray-600 hover:text-gray-100'
+                }`}
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -361,19 +391,25 @@ const Courses = () => {
         {/* Active Filters */}
         {(searchTerm || selectedCategory !== 'all') && (
           <div className="flex items-center gap-2 mt-3">
-            <span className="text-sm text-gray-500">Active filters:</span>
+            <span className="text-sm text-gray-400">Active filters:</span>
             {searchTerm && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-gray-700 text-gray-300 border-gray-600">
                 Search: "{searchTerm}"
-                <button onClick={() => setSearchTerm('')} className="ml-1 hover:bg-gray-200 rounded">
+                <button 
+                  onClick={() => setSearchTerm('')} 
+                  className="ml-1 hover:bg-gray-600 rounded text-gray-400 hover:text-gray-200"
+                >
                   ×
                 </button>
               </Badge>
             )}
             {selectedCategory !== 'all' && (
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-gray-700 text-gray-300 border-gray-600">
                 Category: {CATEGORY_OPTIONS.find(c => c.value === selectedCategory)?.label}
-                <button onClick={() => setSelectedCategory('all')} className="ml-1 hover:bg-gray-200 rounded">
+                <button 
+                  onClick={() => setSelectedCategory('all')} 
+                  className="ml-1 hover:bg-gray-600 rounded text-gray-400 hover:text-gray-200"
+                >
                   ×
                 </button>
               </Badge>
@@ -388,11 +424,11 @@ const Courses = () => {
           <div className="text-center py-12">
             {searchTerm || selectedCategory !== 'all' ? (
               <div>
-                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                <Search className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-100 mb-2">
                   No courses found
                 </h3>
-                <p className="text-gray-500 mb-4">
+                <p className="text-gray-400 mb-4">
                   Try adjusting your search or filter criteria
                 </p>
                 <Button
@@ -401,20 +437,24 @@ const Courses = () => {
                     setSearchTerm('');
                     setSelectedCategory('all');
                   }}
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-gray-100"
                 >
                   Clear Filters
                 </Button>
               </div>
             ) : (
               <div>
-                <Sparkles className="w-12 h-12 text-primary-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                <Sparkles className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-100 mb-2">
                   Start your teaching journey
                 </h3>
-                <p className="text-gray-500 mb-6">
+                <p className="text-gray-400 mb-6">
                   Create your first course and share your knowledge with the world
                 </p>
-                <Button onClick={handleCreateCourse} className="gap-2">
+                <Button 
+                  onClick={handleCreateCourse} 
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   <Plus className="w-4 h-4" />
                   Create Your First Course
                 </Button>
@@ -426,11 +466,13 @@ const Courses = () => {
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium">
+                <h2 className="text-lg font-medium text-gray-100">
                   {filteredAndSortedCourses.length} course{filteredAndSortedCourses.length !== 1 ? 's' : ''}
                 </h2>
                 {(searchTerm || selectedCategory !== 'all') && (
-                  <Badge variant="outline">Filtered</Badge>
+                  <Badge variant="outline" className="border-blue-400 text-blue-400">
+                    Filtered
+                  </Badge>
                 )}
               </div>
             </div>
