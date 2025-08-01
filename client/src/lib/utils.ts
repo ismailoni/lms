@@ -299,8 +299,8 @@ export const createCourseFormData = (
   formData.append("price", data.coursePrice.toString());
   formData.append("status", data.courseStatus ? "Published" : "Draft");
 
-  // Handle course image
-  if (data.courseImage instanceof File) {
+  // Handle course image - Fixed instanceof check
+  if (typeof File !== "undefined" && data.courseImage instanceof File) {
     formData.append("image", data.courseImage);
   } else if (typeof data.courseImage === "string" && data.courseImage) {
     formData.append("imageUrl", data.courseImage);
@@ -328,7 +328,13 @@ export const uploadAllVideos = async (
     chapterId: string;
     fileName: string;
     fileType: string;
-  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> }> }
+  }) => {
+    unwrap: () => Promise<{
+      uploadUrl: string;
+      videoUrl: string;
+      uploadParams: Record<string, string>;
+    }>;
+  }
 ) => {
   const updatedSections = localSections.map((section) => ({
     ...section,
@@ -340,7 +346,12 @@ export const uploadAllVideos = async (
   for (let i = 0; i < updatedSections.length; i++) {
     for (let j = 0; j < updatedSections[i].chapters.length; j++) {
       const chapter = updatedSections[i].chapters[j];
-      if (chapter.video instanceof File && chapter.video.type === "video/mp4") {
+      // Fixed instanceof check for video
+      if (
+        chapter.video &&
+        chapter.video instanceof File &&
+        chapter.video.type === "video/mp4"
+      ) {
         try {
           const updatedChapter = await uploadVideo(
             chapter,
@@ -372,9 +383,16 @@ async function uploadVideo(
     chapterId: string;
     fileName: string;
     fileType: string;
-  }) => { unwrap: () => Promise<{ uploadUrl: string; videoUrl: string; uploadParams: Record<string, string> }> }
+  }) => {
+    unwrap: () => Promise<{
+      uploadUrl: string;
+      videoUrl: string;
+      uploadParams: Record<string, string>;
+    }>;
+  }
 ) {
-  if (!(chapter.video instanceof File)) {
+  // Fixed instanceof check for video
+  if (!chapter.video || !(chapter.video instanceof File)) {
     return chapter;
   }
 
@@ -389,20 +407,20 @@ async function uploadVideo(
       fileType: chapter.video.type,
     }).unwrap();
 
-    console.log('Upload params received:', uploadParams);
+    console.log("Upload params received:", uploadParams);
 
     // Create FormData for Cloudinary upload
     const formData = new FormData();
-    formData.append('api_key', uploadParams.api_key);
-    formData.append('timestamp', uploadParams.timestamp);
-    formData.append('signature', uploadParams.signature);
-    formData.append('folder', uploadParams.folder);
-    formData.append('public_id', uploadParams.public_id);
+    formData.append("api_key", uploadParams.api_key);
+    formData.append("timestamp", uploadParams.timestamp);
+    formData.append("signature", uploadParams.signature);
+    formData.append("folder", uploadParams.folder);
+    formData.append("public_id", uploadParams.public_id);
 
     // **Don't include resource_type here**
-    formData.append('file', chapter.video);
+    formData.append("file", chapter.video);
 
-    console.log('Sending FormData with keys:', Array.from(formData.keys()));
+    console.log("Sending FormData with keys:", Array.from(formData.keys()));
 
     const uploadResponse = await fetch(uploadUrl, {
       method: "POST",
@@ -411,17 +429,22 @@ async function uploadVideo(
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
-      console.error('Cloudinary upload error response:', errorText);
-      throw new Error(`Upload failed: ${uploadResponse.statusText} - ${errorText}`);
+      console.error("Cloudinary upload error response:", errorText);
+      throw new Error(
+        `Upload failed: ${uploadResponse.statusText} - ${errorText}`
+      );
     }
 
     const uploadResult = await uploadResponse.json();
-    console.log('Cloudinary upload success:', uploadResult);
+    console.log("Cloudinary upload success:", uploadResult);
 
     // Return the chapter with the secure URL from Cloudinary response
     return { ...chapter, video: uploadResult.secure_url || videoUrl };
   } catch (error) {
-    console.error(`Failed to upload video for chapter ${chapter.chapterId}:`, error);
+    console.error(
+      `Failed to upload video for chapter ${chapter.chapterId}:`,
+      error
+    );
     throw error;
   }
 }

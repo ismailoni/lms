@@ -210,7 +210,7 @@ declare global {
     courseCategory: string;
     coursePrice: string;
     courseStatus: boolean;
-    courseImage: string | null;
+    courseImage: File | string | null;
   }
 }
 
