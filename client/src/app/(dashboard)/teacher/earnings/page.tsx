@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from "react";
-import Loading from "@/components/Loading";
 import {
   Card,
   CardContent,
@@ -47,7 +46,6 @@ import {
   BookOpen,
   Users,
   TrendingUp,
-  TrendingDown,
   Calendar,
   Filter,
   Download,
@@ -55,10 +53,8 @@ import {
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
   AlertCircle,
-  Star,
   Award,
   Target,
-  Clock,
   ArrowUpRight,
   ArrowDownRight,
   Eye,
@@ -207,7 +203,7 @@ const TeacherEarningsDashboard = () => {
               axisLine={{ stroke: '#374151' }}
             />
             <Tooltip 
-              formatter={(val: any, name: string, props: any) => [
+              formatter={(val: number | string, name: string) => [
                 formatPrice(typeof val === "number" ? val : Number(val)),
                 name === 'earnings' ? 'Earnings' : name
               ]}
@@ -242,7 +238,7 @@ const TeacherEarningsDashboard = () => {
               axisLine={{ stroke: '#374151' }}
             />
             <Tooltip 
-              formatter={(val: any) => [formatPrice(typeof val === "number" ? val : Number(val)), 'Earnings']}
+              formatter={(val: number | string) => [formatPrice(typeof val === "number" ? val : Number(val)), 'Earnings']}
               labelFormatter={(label) => chartData.find(d => d.name === label)?.fullName || label}
               contentStyle={{
                 backgroundColor: '#1F2937',
@@ -269,7 +265,7 @@ const TeacherEarningsDashboard = () => {
               axisLine={{ stroke: '#374151' }}
             />
             <Tooltip 
-              formatter={(val: any) => [formatPrice(typeof val === "number" ? val : Number(val)), 'Earnings']}
+              formatter={(val: number | string) => [formatPrice(typeof val === "number" ? val : Number(val)), 'Earnings']}
               labelFormatter={(label) => chartData.find(d => d.name === label)?.fullName || label}
               contentStyle={{
                 backgroundColor: '#1F2937',
@@ -558,7 +554,7 @@ const TeacherEarningsDashboard = () => {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(val: any) => [formatPrice(Number(val)), 'Earnings']} 
+                        formatter={(val: number | string) => [formatPrice(Number(val)), 'Earnings']} 
                         contentStyle={{
                           backgroundColor: '#1F2937',
                           border: '1px solid #374151',

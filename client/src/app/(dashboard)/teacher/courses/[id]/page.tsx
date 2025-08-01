@@ -2,12 +2,10 @@
 
 import { CustomFormField } from "@/components/CustomFormField";
 import { CourseImageUpload } from "@/components/CourseImageUpload";
-import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -211,30 +209,30 @@ const CourseEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+    <div className="min-h-screen bg-gray-900">
+      {/* Enhanced Dark Header */}
+      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push("/teacher/courses", { scroll: false })}
-              className="gap-2"
+              className="gap-2 text-gray-300 hover:text-gray-100 hover:bg-gray-700"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Courses
             </Button>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 bg-gray-600" />
 
             <div className="flex items-center gap-3">
-              <BookOpen className="w-5 h-5 text-primary-600" />
+              <BookOpen className="w-5 h-5 text-blue-400" />
               <div>
-                <h1 className="text-lg font-semibold">
+                <h1 className="text-lg font-semibold text-gray-100">
                   {course?.title || "New Course"}
                 </h1>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-sm text-gray-400">
                   <span>Course Editor</span>
                   {lastSaved && (
                     <>
@@ -248,10 +246,14 @@ const CourseEditor = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Completion Badge */}
+            {/* Enhanced Completion Badge */}
             <Badge
               variant={isReadyToPublish ? "default" : "secondary"}
-              className="gap-1"
+              className={`gap-1 ${
+                isReadyToPublish 
+                  ? 'bg-green-600 text-white border-green-500' 
+                  : 'bg-gray-700 text-gray-300 border-gray-600'
+              }`}
             >
               {isReadyToPublish ? (
                 <CheckCircle className="w-3 h-3" />
@@ -261,27 +263,35 @@ const CourseEditor = () => {
               {completionPercentage}% Complete
             </Badge>
 
-            {/* Status Toggle */}
-            <CustomFormField
-              name="courseStatus"
-              label={methods.watch("courseStatus") ? "Published" : "Draft"}
-              type="switch"
-              className="flex items-center space-x-2"
-              labelClassName={`text-sm font-medium ${
+            {/* Enhanced Status Toggle */}
+            <div className="flex items-center gap-2">
+              <CustomFormField
+                name="courseStatus"
+                label=""
+                type="switch"
+                className="flex items-center space-x-2"
+                inputClassName={`${
+                  methods.watch("courseStatus")
+                    ? "data-[state=checked]:bg-green-500"
+                    : "bg-gray-600"
+                }`}
+              />
+              <span className={`text-sm font-medium ${
                 methods.watch("courseStatus")
-                  ? "text-green-600"
-                  : "text-yellow-600"
-              }`}
-              inputClassName="data-[state=checked]:bg-green-500"
-            />
+                  ? "text-green-400"
+                  : "text-yellow-400"
+              }`}>
+                {methods.watch("courseStatus") ? "Published" : "Draft"}
+              </span>
+            </div>
 
-            {/* Action Buttons */}
+            {/* Enhanced Action Buttons */}
             <Button
               variant="outline"
               size="sm"
               onClick={previewCourse}
               disabled={!isReadyToPublish}
-              className="gap-2"
+              className="gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-gray-100 disabled:text-gray-500"
             >
               <Eye className="w-4 h-4" />
               Preview
@@ -290,7 +300,7 @@ const CourseEditor = () => {
             <Button
               onClick={handleQuickSave}
               disabled={isSaving || !hasUnsavedChanges}
-              className="gap-2 bg-primary-600 hover:bg-primary-700"
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600"
             >
               {isSaving ? (
                 <>
@@ -307,22 +317,29 @@ const CourseEditor = () => {
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Enhanced Progress Bar */}
         <div className="mt-4">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+          <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
             <span>Course Completion</span>
             <span>{completionPercentage}%</span>
           </div>
-          <Progress value={completionPercentage} className="h-2" />
+          <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all duration-300 ${
+                isReadyToPublish ? 'bg-green-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${completionPercentage}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Unsaved Changes Alert */}
+      {/* Enhanced Unsaved Changes Alert */}
       {hasUnsavedChanges && (
-        <Alert className="mx-6 mt-4 border-yellow-200 bg-yellow-50 text-yellow-800">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You have unsaved changes. Don't forget to save your progress!
+        <Alert className="mx-6 mt-4 border-yellow-600 bg-yellow-900/20">
+          <AlertCircle className="h-4 w-4 text-yellow-400" />
+          <AlertDescription className="text-yellow-200">
+            You have unsaved changes. Don&apos;t forget to save your progress!
           </AlertDescription>
         </Alert>
       )}
@@ -330,16 +347,25 @@ const CourseEditor = () => {
       <Form {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="basic" className="gap-2">
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-800 border-gray-700">
+              <TabsTrigger 
+                value="basic" 
+                className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+              >
                 <FileText className="w-4 h-4" />
                 Basic Info
               </TabsTrigger>
-              <TabsTrigger value="content" className="gap-2">
+              <TabsTrigger 
+                value="content" 
+                className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+              >
                 <BookOpen className="w-4 h-4" />
                 Course Content
               </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
+              <TabsTrigger 
+                value="settings" 
+                className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+              >
                 <Settings className="w-4 h-4" />
                 Settings
               </TabsTrigger>
@@ -348,13 +374,13 @@ const CourseEditor = () => {
             {/* Basic Information Tab */}
             <TabsContent value="basic" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
+                <Card className="bg-gray-800 border-gray-700">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-primary-600" />
+                    <CardTitle className="flex items-center gap-2 text-gray-100">
+                      <Sparkles className="w-5 h-5 text-blue-400" />
                       Course Details
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-400">
                       Basic information about your course that students will see
                     </CardDescription>
                   </CardHeader>
@@ -390,13 +416,13 @@ const CourseEditor = () => {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="bg-gray-800 border-gray-700">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ImageIcon className="w-5 h-5 text-primary-600" />
+                    <CardTitle className="flex items-center gap-2 text-gray-100">
+                      <ImageIcon className="w-5 h-5 text-blue-400" />
                       Course Appearance
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-400">
                       Visual elements that represent your course
                     </CardDescription>
                   </CardHeader>
@@ -416,17 +442,20 @@ const CourseEditor = () => {
                       helperText="Set to 0 for a free course"
                     />
 
-                    {/* Course Stats Preview */}
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <h4 className="font-medium mb-3">Course Preview</h4>
+                    {/* Enhanced Course Stats Preview */}
+                    <div className="p-4 bg-gray-700 rounded-lg border border-gray-600">
+                      <h4 className="font-medium mb-3 text-gray-200 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-blue-400" />
+                        Course Preview
+                      </h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-gray-500" />
-                          <span>0 Students</span>
+                          <Users className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">0 Students</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <span>
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">
                             {sections.reduce(
                               (acc, section) => acc + section.chapters.length,
                               0
@@ -435,12 +464,12 @@ const CourseEditor = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-gray-500" />
-                          <span>${watchedValues.coursePrice || "0"}</span>
+                          <DollarSign className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">${watchedValues.coursePrice || "0"}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Target className="w-4 h-4 text-gray-500" />
-                          <span>{sections.length} Sections</span>
+                          <Target className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">{sections.length} Sections</span>
                         </div>
                       </div>
                     </div>
@@ -451,22 +480,22 @@ const CourseEditor = () => {
 
             {/* Course Content Tab */}
             <TabsContent value="content" className="space-y-6">
-              <Card>
+              <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-primary-600" />
+                      <CardTitle className="flex items-center gap-2 text-gray-100">
+                        <BookOpen className="w-5 h-5 text-blue-400" />
                         Course Content
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-gray-400">
                         Organize your course into sections and chapters
                       </CardDescription>
                     </div>
                     <Button
                       type="button"
                       onClick={() => dispatch(openSectionModal({ sectionIndex: null }))}
-                      className="gap-2"
+                      className="gap-2 bg-blue-600 hover:bg-blue-700"
                     >
                       <Plus className="w-4 h-4" />
                       Add Section
@@ -477,25 +506,25 @@ const CourseEditor = () => {
                   {isLoading ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="text-center">
-                        <div className="w-8 h-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent mx-auto mb-2" />
-                        <p>Loading course content...</p>
+                        <div className="w-8 h-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mx-auto mb-2" />
+                        <p className="text-gray-400">Loading course content...</p>
                       </div>
                     </div>
                   ) : sections.length > 0 ? (
                     <DroppableComponent />
                   ) : (
                     <div className="text-center py-12">
-                      <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      <BookOpen className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-100 mb-2">
                         No content yet
                       </h3>
-                      <p className="text-gray-500 mb-4">
+                      <p className="text-gray-400 mb-4">
                         Start building your course by adding your first section
                       </p>
                       <Button
                         type="button"
                         onClick={() => dispatch(openSectionModal({ sectionIndex: null }))}
-                        className="gap-2"
+                        className="gap-2 bg-blue-600 hover:bg-blue-700"
                       >
                         <Plus className="w-4 h-4" />
                         Add Your First Section
@@ -505,10 +534,10 @@ const CourseEditor = () => {
                 </CardContent>
               </Card>
 
-              {/* Content Guidelines */}
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
+              {/* Enhanced Content Guidelines */}
+              <Alert className="border-blue-600 bg-blue-900/20">
+                <Info className="h-4 w-4 text-blue-400" />
+                <AlertDescription className="text-blue-200">
                   <strong>Content Tips:</strong> Break your course into logical
                   sections (3-8 sections recommended). Each section should contain
                   3-7 chapters for optimal learning experience.
@@ -518,55 +547,80 @@ const CourseEditor = () => {
 
             {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-6">
-              <Card>
+              <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-primary-600" />
+                  <CardTitle className="flex items-center gap-2 text-gray-100">
+                    <Settings className="w-5 h-5 text-blue-400" />
                     Course Settings
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-400">
                     Configure how your course appears and behaves
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium">
+                      <label className="text-sm font-medium text-gray-200">
                         Publishing Status
                       </label>
-                      <div className="mt-2 p-4 border rounded-lg">
+                      <div className="mt-2 p-4 border border-gray-600 rounded-lg bg-gray-700/50">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-medium">
+                            <h4 className="font-medium text-gray-100">
                               {methods.watch("courseStatus")
                                 ? "Published"
                                 : "Draft"}
                             </h4>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-400">
                               {methods.watch("courseStatus")
                                 ? "Your course is live and visible to students"
                                 : "Your course is saved as draft and not visible to students"}
                             </p>
                           </div>
-                          <CustomFormField
-                            name="courseStatus"
-                            label={methods.watch("courseStatus") ? "Published" : "Draft"}
-                            type="switch"
-                            inputClassName="data-[state=checked]:bg-green-500"
-                          />
+                          <div className="flex items-center gap-2">
+                            <CustomFormField
+                              name="courseStatus"
+                              label=""
+                              type="switch"
+                              inputClassName="data-[state=checked]:bg-green-500"
+                            />
+                            <Badge
+                              variant={methods.watch("courseStatus") ? "default" : "secondary"}
+                              className={`${
+                                methods.watch("courseStatus")
+                                  ? "bg-green-600 text-white"
+                                  : "bg-gray-600 text-gray-300"
+                              }`}
+                            >
+                              {methods.watch("courseStatus") ? "Live" : "Draft"}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {!isReadyToPublish && (
-                      <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
+                      <Alert className="border-yellow-600 bg-yellow-900/20">
+                        <AlertCircle className="h-4 w-4 text-yellow-400" />
+                        <AlertDescription className="text-yellow-200">
                           Complete at least 80% of your course details to enable
                           publishing. Current completion: {completionPercentage}%
                         </AlertDescription>
                       </Alert>
                     )}
+
+                    {/* Additional Settings Placeholder */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-200 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-blue-400" />
+                        Additional Options
+                      </h4>
+                      <div className="p-4 border border-gray-600 rounded-lg bg-gray-700/30">
+                        <p className="text-sm text-gray-400 text-center py-4">
+                          More settings will be available soon...
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

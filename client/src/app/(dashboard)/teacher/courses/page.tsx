@@ -1,11 +1,8 @@
 'use client';
 
-import Header from '@/components/Header';
-import Loading from '@/components/Loading';
 import TeacherCourseCard from '@/components/TeacherCourseCard';
-import Toolbar from '@/components/Toolbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,14 +20,10 @@ import {
   BookOpen, 
   Users, 
   DollarSign, 
-  TrendingUp,
   AlertCircle,
   CheckCircle2,
   Clock,
-  Eye,
-  MoreHorizontal,
   SortAsc,
-  SortDesc,
   Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -79,7 +72,7 @@ const Courses = () => {
   const filteredAndSortedCourses = useMemo(() => {
     if (!courses) return [];
 
-    let filtered = courses.filter((course) => {
+    const filtered = courses.filter((course) => {
       const matchesSearch = course.title
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -394,7 +387,7 @@ const Courses = () => {
             <span className="text-sm text-gray-400">Active filters:</span>
             {searchTerm && (
               <Badge variant="secondary" className="gap-1 bg-gray-700 text-gray-300 border-gray-600">
-                Search: "{searchTerm}"
+                Search: &quot;{searchTerm}&quot;
                 <button 
                   onClick={() => setSearchTerm('')} 
                   className="ml-1 hover:bg-gray-600 rounded text-gray-400 hover:text-gray-200"

@@ -8,9 +8,6 @@ import { motion } from "framer-motion";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,13 +32,6 @@ import {
   Play,
   CheckCircle2,
   Trophy,
-  TrendingUp,
-  Star,
-  Calendar,
-  Users,
-  Target,
-  Award,
-  ArrowRight,
   ExternalLink,
   Sparkles,
   AlertCircle,
@@ -51,6 +41,7 @@ import {
   Plus,
 } from "lucide-react";
 import Loading from "@/components/Loading";
+import Image from "next/image";
 
 type ViewMode = "grid" | "list";
 type SortOption = "recent" | "progress" | "alphabetical" | "newest";
@@ -103,7 +94,7 @@ const Courses = () => {
   const { filteredCourses, stats } = useMemo(() => {
     if (!courses) return { filteredCourses: [], stats: null };
 
-    let filtered = courses.filter((course) => {
+    const filtered = courses.filter((course) => {
       const title = course.title || "";
       const category = course.category || "";
 
@@ -174,6 +165,7 @@ const Courses = () => {
   // Mock function to calculate course progress
   const getCourseProgress = (course: Course) => {
     // In a real app, this would calculate based on completed chapters
+    console.log(course);
     return Math.floor(Math.random() * 100);
   };
 
@@ -221,7 +213,7 @@ const Courses = () => {
                 {/* Course Image */}
                 <div className="relative flex-shrink-0">
                   {course.image ? (
-                    <img
+                    <Image
                       src={course.image}
                       alt={course.title}
                       className="w-20 h-15 object-cover rounded-lg"
@@ -302,7 +294,7 @@ const Courses = () => {
         <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden">
           <div className="relative">
             {course.image ? (
-              <img
+              <Image
                 src={course.image}
                 alt={course.title}
                 className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
@@ -410,7 +402,7 @@ const Courses = () => {
               Start Your Learning Journey
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-              You haven't enrolled in any courses yet. Explore our catalog and find
+              You haven&apos;t enrolled in any courses yet. Explore our catalog and find
               courses that match your interests.
             </p>
             <Button size="lg" className="gap-2">

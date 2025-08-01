@@ -102,7 +102,7 @@ const UserBilling = () => {
   const { filteredData, stats } = useMemo(() => {
     if (!transactions) return { filteredData: [], stats: null };
 
-    let filtered = transactions.filter((transaction) => {
+    const filtered = transactions.filter((transaction) => {
       const matchesPaymentType =
         paymentType === "all" || transaction.paymentProvider === paymentType;
       
@@ -413,7 +413,7 @@ const UserBilling = () => {
                 <span className="text-sm text-gray-500">Active filters:</span>
                 {searchTerm && (
                   <Badge variant="secondary" className="gap-1">
-                    Search: "{searchTerm}"
+                    Search: &quot;{searchTerm}&quot;
                     <button onClick={() => setSearchTerm('')} className="ml-1 hover:bg-gray-200 rounded">
                       ×
                     </button>

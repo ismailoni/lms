@@ -206,7 +206,7 @@ const SectionModal = () => {
           <Alert className="mb-6 border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
             <AlertCircle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-800 dark:text-yellow-200">
-              You have unsaved changes. Don't forget to save your progress!
+              You have unsaved changes. Don&apos;t forget to save your progress!
             </AlertDescription>
           </Alert>
         )}
@@ -224,7 +224,7 @@ const SectionModal = () => {
                   Section Information
                 </CardTitle>
                 <CardDescription>
-                  Provide details about this section to help students understand what they'll learn
+                  Provide details about this section to help students understand what they&apos;ll learn
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
