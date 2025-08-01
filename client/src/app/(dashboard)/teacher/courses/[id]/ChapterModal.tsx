@@ -180,7 +180,7 @@ const ChapterModal = () => {
 
       setHasUnsavedChanges(false);
       dispatch(closeChapterModal());
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);

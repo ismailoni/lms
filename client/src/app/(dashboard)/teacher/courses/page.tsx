@@ -132,7 +132,7 @@ const Courses = () => {
         await deleteCourse(course.courseId).unwrap();
         toast.success('Course deleted successfully');
         refetch();
-      } catch (error) {
+      } catch {
         toast.error('Failed to delete course');
       }
     }
@@ -157,7 +157,7 @@ const Courses = () => {
       router.push(`/teacher/courses/${result.courseId}`, {
         scroll: false,
       });
-    } catch (error) {
+    } catch {
       toast.error('Failed to create course', { id: 'create-course' });
     }
   };
