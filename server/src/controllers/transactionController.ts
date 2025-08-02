@@ -15,7 +15,7 @@ function cleanString(value: string): string {
 }
 
 // ---------------------------------
-// Create PaymentIntent
+// Create Payment Intent
 // ---------------------------------
 export const createStripePaymentIntent = async (req: Request, res: Response) => {
   try {
@@ -34,8 +34,8 @@ export const createStripePaymentIntent = async (req: Request, res: Response) => 
       return res.status(404).json({ success: false, message: "Course not found or invalid price" });
     }
 
-    // Check if user is already enrolled
-    const enrollments = (course.enrollments as string[]) || [];
+    // Check if user is already enrolled - enrollments is now String[]
+    const enrollments = course.enrollments || [];
     if (enrollments.includes(userId)) {
       return res.status(409).json({ success: false, message: "Already enrolled in this course" });
     }
@@ -176,33 +176,35 @@ export const listTransaction = async (req: Request, res: Response): Promise<void
 // ---------------------------------
 export async function updateTeacherEarnings(courseId: string, transactionAmount: number): Promise<void> {
   try {
-    const course = await CourseModel.findById(cleanString(courseId));
+    const course = await CourseModel.findById(courseId);
     if (!course) {
       console.error(`Course not found: ${courseId}`);
       return;
     }
 
-    const teacherId = cleanString(course.teacherId);
-    const title = cleanString(course.title);
-    const teacherEarning = +(transactionAmount * 0.7).toFixed(2);
+    const teacherId = course.teacherId;
+    const teacherEarning = Math.round(transactionAmount * 0.7); // 70% to teacher, in cents
+
+    // Get actual enrollment count from course.enrollments array
+    const actualEnrollmentCount = course.enrollments?.length || 0;
 
     const existingEarnings = await TeacherEarningsModel.findByTeacherIdAndCourseId(teacherId, courseId);
 
     if (existingEarnings) {
       await TeacherEarningsModel.update(teacherId, courseId, {
-        enrollCount: (existingEarnings.enrollCount || 0) + 1,
-        earnings: +((existingEarnings.earnings || 0) + teacherEarning).toFixed(2),
+        enrollCount: actualEnrollmentCount, // ← Use actual count from enrollments
+        earnings: (existingEarnings.earnings || 0) + teacherEarning,
       });
-      console.log(`Updated earnings for teacher ${teacherId}: +$${teacherEarning}`);
+      console.log(`Updated earnings for teacher ${teacherId}: enrollments=${actualEnrollmentCount}, +$${teacherEarning/100}`);
     } else {
       await TeacherEarningsModel.create({
         teacherId,
         courseId,
-        title,
-        enrollCount: 1,
+        title: course.title,
+        enrollCount: actualEnrollmentCount, // ← Use actual count from enrollments
         earnings: teacherEarning,
       });
-      console.log(`Created earnings record for teacher ${teacherId}: $${teacherEarning}`);
+      console.log(`Created earnings record for teacher ${teacherId}: enrollments=${actualEnrollmentCount}, $${teacherEarning/100}`);
     }
   } catch (error) {
     console.error("Error updating teacher earnings:", error);

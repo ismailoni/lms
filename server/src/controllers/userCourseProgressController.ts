@@ -77,7 +77,8 @@ export const getUserCourseProgress = async (
       return;
     }
 
-    const enrollments = course.enrollments || []; // Handle null case
+    // enrollments is now String[] so we can directly use includes()
+    const enrollments = course.enrollments || [];
     if (!enrollments.includes(userId)) {
       res.status(403).json({ 
         success: false, 
@@ -126,7 +127,8 @@ export const updateUserCourseProgress = async (
       return;
     }
 
-    const enrollments = (course.enrollments as string[]) || [];
+    // enrollments is now String[] so we can directly use includes()
+    const enrollments = course.enrollments || [];
     if (!enrollments.includes(userId)) {
       res.status(403).json({ 
         success: false, 
@@ -215,7 +217,8 @@ export const updateChapterProgress = async (
       return;
     }
 
-    const enrollments = (course.enrollments as string[]) || [];
+    // enrollments is now String[] so we can directly use includes()
+    const enrollments = course.enrollments || [];
     if (!enrollments.includes(userId)) {
       res.status(403).json({ 
         success: false, 
@@ -283,9 +286,10 @@ export const checkCourseAccess = async (
       return;
     }
 
-    const enrollments = (course.enrollments as string[]) || [];
+    // enrollments is now String[] so we can directly use includes()
+    const enrollments = course.enrollments || [];
     const isEnrolled = enrollments.includes(userId);
-    
+
     let progress = null;
     if (isEnrolled) {
       progress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);

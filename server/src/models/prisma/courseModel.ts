@@ -33,7 +33,7 @@ export class CourseModel {
     // Ensure enrollments and sections are arrays
     return courses.map(course => ({
       ...course,
-      enrollments: (course.enrollments as string[]) || [],
+      enrollments: course.enrollments || [], // Now String[] from database
       sections: (course.sections as any[]) || []
     }));
   }
@@ -48,7 +48,7 @@ export class CourseModel {
     // Ensure enrollments and sections are arrays
     return {
       ...course,
-      enrollments: (course.enrollments as string[]) || [],
+      enrollments: course.enrollments || [], // Now String[] from database
       sections: (course.sections as any[]) || []
     };
   }
@@ -67,7 +67,7 @@ export class CourseModel {
         level: data.level,
         status: data.status,
         sections: data.sections,
-        enrollments: data.enrollments,
+        enrollments: data.enrollments || [], // Default to empty array
       },
     });
   }
@@ -80,7 +80,7 @@ export class CourseModel {
       updateData.sections = data.sections && data.sections.length > 0 ? data.sections : null;
     }
     if (data.enrollments !== undefined) {
-      updateData.enrollments = data.enrollments && data.enrollments.length > 0 ? data.enrollments : null;
+      updateData.enrollments = data.enrollments || []; // Always array for String[]
     }
 
     return prisma.course.update({
@@ -94,32 +94,34 @@ export class CourseModel {
   }
 
   static async addEnrollment(courseId: string, userId: string) {
-    const course = await this.findById(courseId);
-    if (!course) throw new Error('Course not found');
+    // Use PostgreSQL array operations for String[]
+    await prisma.$executeRaw`
+      UPDATE "courses" 
+      SET "enrollments" = array_append("enrollments", ${userId})
+      WHERE "courseId" = ${courseId}
+      AND NOT (${userId} = ANY("enrollments"))
+    `;
     
-    const enrollments = (course.enrollments as string[]) || [];
-    if (!enrollments.includes(userId)) {
-      enrollments.push(userId);
-      return this.update(courseId, { enrollments });
-    }
-    return course;
+    return this.findById(courseId);
   }
 
   static async removeEnrollment(courseId: string, userId: string) {
-    const course = await this.findById(courseId);
-    if (!course) throw new Error('Course not found');
+    // Use PostgreSQL array operations for String[]
+    await prisma.$executeRaw`
+      UPDATE "courses" 
+      SET "enrollments" = array_remove("enrollments", ${userId})
+      WHERE "courseId" = ${courseId}
+    `;
     
-    const enrollments = (course.enrollments as string[]) || [];
-    const updatedEnrollments = enrollments.filter(id => id !== userId);
-    return this.update(courseId, { enrollments: updatedEnrollments });
+    return this.findById(courseId);
   }
 
   static async findEnrolledCoursesByUserId(userId: string) {
-    // Use raw SQL query to handle JSON array search properly
+    // Use PostgreSQL array operations to check if user is in enrollments
     const courses = await prisma.$queryRaw<any[]>`
-      SELECT * FROM courses 
-      WHERE enrollments IS NOT NULL 
-      AND enrollments @> ${JSON.stringify([userId])}::jsonb
+      SELECT * FROM "courses" 
+      WHERE "enrollments" IS NOT NULL 
+      AND ${userId} = ANY("enrollments")
       ORDER BY "createdAt" DESC
     `;
 

@@ -11,8 +11,8 @@
     "level": "Beginner",
     "status": "Published",
     "enrollments": [
-      { "userId": "user_2ntu96pUCljUV2T9W0AThzjacQB" },
-      { "userId": "user_9xWp45MnKjL8vRt2Hs6BqDcEy" }
+        "user_2ntu96pUCljUV2T9W0AThzjacQB",
+        "user_9xWp45MnKjL8vRt2Hs6BqDcEy"
     ],
     "sections": [
       {
@@ -123,8 +123,8 @@
     "level": "Advanced",
     "status": "Published",
     "enrollments": [
-      { "userId": "user_2ntu96pUCljUV2T9W0AThzjacQB" },
-      { "userId": "user_5vBn23WsLkMp7Jh4Gt8FxYcRz" }
+      "user_2ntu96pUCljUV2T9W0AThzjacQB",
+      "user_5vBn23WsLkMp7Jh4Gt8FxYcRz"
     ],
     "sections": [
       {
@@ -237,9 +237,9 @@
     "level": "Beginner",
     "status": "Published",
     "enrollments": [
-      { "userId": "user_6tHm89QwNpKj3Fx5Vy2RdLcBs" },
-      { "userId": "user_9xWp45MnKjL8vRt2Hs6BqDcEy" },
-      { "userId": "user_9xWp45MnKjL8vRt2Hs6BqDcEs" }
+        "user_6tHm89QwNpKj3Fx5Vy2RdLcBs",
+        "user_9xWp45MnKjL8vRt2Hs6BqDcEy",
+        "user_9xWp45MnKjL8vRt2Hs6BqDcEs"
     ],
     "sections": [
       {
@@ -314,8 +314,8 @@
     "level": "Intermediate",
     "status": "Published",
     "enrollments": [
-      { "userId": "user_6tHm89QwNpKj3Fx5Vy2RdLcBs" },
-      { "userId": "user_9xWp45MnKjL8vRt2Hs6BqDcEy" }
+      "user_6tHm89QwNpKj3Fx5Vy2RdLcBs",
+      "user_9xWp45MnKjL8vRt2Hs6BqDcEy"
     ],
     "sections": [
       {
@@ -353,7 +353,7 @@
     "price": 12999,
     "level": "Advanced",
     "status": "Published",
-    "enrollments": [{ "userId": "user_6tHm89QwNpKj3Fx5Vy2RdLcBs" }],
+    "enrollments": ["user_6tHm89QwNpKj3Fx5Vy2RdLcBs"],
     "sections": [
       {
         "sectionId": "5k7l9m1n-3o5p-7q9r-1s3t-5u7v9w1x3y5z",
@@ -391,10 +391,10 @@
     "level": "Intermediate",
     "status": "Published",
     "enrollments": [
-      { "userId": "user_learnerA" },
-      { "userId": "user_learnerB" },
-      { "userId": "user_learnerC" },
-      { "userId": "user_learnerD" }
+      "user_learnerA",
+      "user_learnerB",
+      "user_learnerC",
+      "user_learnerD"
     ],
     "sections": [
       {
@@ -498,15 +498,15 @@
     "level": "Advanced",
     "status": "Published",
     "enrollments": [
-      { "userId": "user_alpha" },
-      { "userId": "user_bravo" },
-      { "userId": "user_charlie" },
-      { "userId": "user_delta" },
-      { "userId": "user_echo" },
-      { "userId": "user_foxtrot" },
-      { "userId": "user_golf" },
-      { "userId": "user_hotel" },
-      { "userId": "user_india" }
+      "user_alpha",
+      "user_bravo",
+      "user_charlie",
+      "user_delta",
+      "user_echo",
+      "user_foxtrot",
+      "user_golf",
+      "user_hotel",
+      "user_india"
     ],
     "sections": [
       {

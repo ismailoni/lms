@@ -24,40 +24,40 @@ const readJSON = <T = any>(p: string): T =>
   JSON.parse(fs.readFileSync(p, "utf8"));
 
 // Enhanced safe array function with better validation
-function safeArray(value: any): any[] | null {
+function safeArray(value: any): any[] {
   console.log(`    Validating array data:`, typeof value, Array.isArray(value));
   
   // Handle null/undefined
   if (value === null || value === undefined) {
-    console.log(`    -> Returning null for null/undefined`);
-    return null;
+    console.log(`    -> Returning empty array for null/undefined`);
+    return [];
   }
   
   // Handle proper arrays
   if (Array.isArray(value)) {
     console.log(`    -> Valid array with ${value.length} items`);
-    return value.length > 0 ? value : null;
+    return value;
   }
   
   // Handle strings that might be JSON
   if (typeof value === 'string') {
     if (value.trim() === '' || value === 'null' || value === 'undefined') {
-      console.log(`    -> Empty/null string, returning null`);
-      return null;
+      console.log(`    -> Empty/null string, returning empty array`);
+      return [];
     }
     
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
         console.log(`    -> Parsed JSON array with ${parsed.length} items`);
-        return parsed.length > 0 ? parsed : null;
+        return parsed;
       } else {
-        console.log(`    -> Parsed JSON is not an array, returning null`);
-        return null;
+        console.log(`    -> Parsed JSON is not an array, returning empty array`);
+        return [];
       }
     } catch (error) {
-      console.log(`    -> Failed to parse JSON string, returning null`);
-      return null;
+      console.log(`    -> Failed to parse JSON string, returning empty array`);
+      return [];
     }
   }
   
@@ -68,16 +68,45 @@ function safeArray(value: any): any[] | null {
       try {
         const arrayValue = Array.from(value);
         console.log(`    -> Converted array-like object to array with ${arrayValue.length} items`);
-        return arrayValue.length > 0 ? arrayValue : null;
+        return arrayValue;
       } catch (error) {
-        console.log(`    -> Failed to convert array-like object, returning null`);
-        return null;
+        console.log(`    -> Failed to convert array-like object, returning empty array`);
+        return [];
       }
     }
   }
   
-  console.log(`    -> Unhandled type, returning null`);
-  return null;
+  console.log(`    -> Unhandled type, returning empty array`);
+  return [];
+}
+
+// Safe function for JSON data that can be null
+function safeJson(value: any): any {
+  console.log(`    Validating JSON data:`, typeof value);
+  
+  if (value === null || value === undefined) {
+    console.log(`    -> Returning JsonNull for null/undefined`);
+    return Prisma.JsonNull;
+  }
+  
+  if (Array.isArray(value) || typeof value === 'object') {
+    console.log(`    -> Valid JSON object/array`);
+    return value;
+  }
+  
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      console.log(`    -> Parsed JSON string successfully`);
+      return parsed;
+    } catch (error) {
+      console.log(`    -> Failed to parse JSON string, returning JsonNull`);
+      return Prisma.JsonNull;
+    }
+  }
+  
+  console.log(`    -> Unhandled type, returning JsonNull`);
+  return Prisma.JsonNull;
 }
 
 async function seedData() {
@@ -107,19 +136,15 @@ async function seedData() {
     try {
       console.log(`\nProcessing course ${i + 1}: ${course.title || 'No title'}`);
       
-      // Log raw data for debugging
-      console.log(`  Raw sections:`, course.sections);
-      console.log(`  Raw enrollments:`, course.enrollments);
-      
-      // Safely parse sections and enrollments
-      const sections = safeArray(course.sections);
+      // Safely parse sections (for JSON field) and enrollments (for String[] field)
+      const sections = safeJson(course.sections);
       const enrollments = safeArray(course.enrollments);
       
-      console.log(`  - Final Sections: ${sections ? sections.length : 0} items`);
-      console.log(`  - Final Enrollments: ${enrollments ? enrollments.length : 0} items`);
+      console.log(`  - Final Sections:`, sections === Prisma.JsonNull ? 'JsonNull' : 'valid JSON');
+      console.log(`  - Final Enrollments: ${enrollments.length} string items`);
 
-      // Create course data with explicit null handling
-      const courseData = {
+      // Create course data with proper types
+      const courseData: Prisma.CourseCreateInput = {
         courseId: course.courseId,
         teacherId: course.teacherId ?? course.teacher_id,
         teacherName: course.teacherName ?? course.teacher_name,
@@ -129,17 +154,11 @@ async function seedData() {
         category: course.category,
         image: course.image ?? null,
         price: course.price ?? null,
-        level: course.level,
-        status: course.status,
-        sections: sections ?? Prisma.JsonNull,
-        enrollments: enrollments ?? Prisma.JsonNull,
+        level: course.level as CourseLevel,
+        status: course.status as CourseStatus,
+        sections: sections,
+        enrollments: enrollments, // This is now String[]
       };
-
-      console.log(`  Creating course with data:`, {
-        ...courseData,
-        sections: sections ? `Array(${sections.length})` : 'null',
-        enrollments: enrollments ? `Array(${enrollments.length})` : 'null'
-      });
 
       await prisma.course.create({
         data: courseData,
@@ -150,25 +169,27 @@ async function seedData() {
       console.error(`❌ Error inserting course ${i + 1}:`, error);
       console.log("Full course data:", JSON.stringify(course, null, 2));
       
-      // Try inserting with completely null sections and enrollments
-      console.log("Attempting to insert with null sections and enrollments...");
+      // Try inserting with completely safe defaults
+      console.log("Attempting to insert with safe defaults...");
       try {
+        const fallbackData: Prisma.CourseCreateInput = {
+          courseId: course.courseId || `course-${i}`,
+          teacherId: course.teacherId ?? course.teacher_id ?? `teacher-${i}`,
+          teacherName: course.teacherName ?? course.teacher_name ?? `Teacher ${i}`,
+          teacherImage: null,
+          title: course.title || `Course ${i}`,
+          description: course.description ?? null,
+          category: course.category || "General",
+          image: null,
+          price: course.price ?? null,
+          level: (course.level as CourseLevel) || CourseLevel.Beginner,
+          status: (course.status as CourseStatus) || CourseStatus.Published,
+          sections: Prisma.JsonNull,
+          enrollments: [], // Empty array instead of JsonNull
+        };
+
         await prisma.course.create({
-          data: {
-            courseId: course.courseId || `course-${i}`,
-            teacherId: course.teacherId ?? course.teacher_id ?? `teacher-${i}`,
-            teacherName: course.teacherName ?? course.teacher_name ?? `Teacher ${i}`,
-            teacherImage: null,
-            title: course.title || `Course ${i}`,
-            description: course.description ?? null,
-            category: course.category || "General",
-            image: null,
-            price: course.price ?? null,
-            level: "Beginner" as CourseLevel,
-            status: "Published" as CourseStatus,
-            sections: Prisma.JsonNull,
-            enrollments: Prisma.JsonNull,
-          },
+          data: fallbackData,
         });
         console.log(`  ✅ Course ${i + 1} inserted with fallback data`);
       } catch (fallbackError) {
@@ -194,7 +215,7 @@ async function seedData() {
           },
         });
 
-        // Add user to course enrollments
+        // Add user to course enrollments using raw SQL for array operations
         const courseId = transaction.courseId ?? transaction.course_id;
         const userId = transaction.userId ?? transaction.user_id;
 
@@ -203,46 +224,64 @@ async function seedData() {
         });
 
         if (course) {
-          const currentEnrollments = safeArray(course.enrollments) || [];
+          const currentEnrollments = course.enrollments || [];
           if (!currentEnrollments.includes(userId)) {
-            currentEnrollments.push(userId);
             await prisma.course.update({
               where: { courseId },
-              data: { enrollments: currentEnrollments },
+              data: { 
+                enrollments: {
+                  push: userId // Use Prisma's push operation for arrays
+                }
+              },
             });
           }
         }
       } catch (error) {
         console.error("Error processing transaction:", error);
-        console.log("Transaction data:", JSON.stringify(transaction, null, 2));
-        // Don't throw here, continue with other transactions
+        // Continue with other transactions
       }
     }
   }
 
   // Generate teacher earnings
   console.log("Generating teacher earnings...");
-  const transactions = await prisma.transaction.findMany({
-    include: { course: true },
+  
+  // Get all courses with their actual enrollments
+  const courses = await prisma.course.findMany({
+    select: {
+      courseId: true,
+      teacherId: true,
+      title: true,
+      enrollments: true, // This is String[]
+      price: true,
+    },
   });
 
   const earningsMap = new Map();
-  for (const transaction of transactions) {
-    const key = `${transaction.course.teacherId}-${transaction.courseId}`;
-    if (!earningsMap.has(key)) {
+  
+  for (const course of courses) {
+    const key = `${course.teacherId}-${course.courseId}`;
+    
+    // Calculate actual enrollment count from course.enrollments array
+    const actualEnrollmentCount = course.enrollments?.length || 0;
+    
+    // Calculate total earnings from enrollments for this course
+    const courseTransactions = course.enrollments.length * (course.price || 0);
+    const totalEarnings = courseTransactions * 0.7; // 70% to teacher
+    
+    // Only create earnings record if there are enrollments or transactions
+    if (actualEnrollmentCount > 0) {
       earningsMap.set(key, {
-        teacherId: transaction.course.teacherId,
-        courseId: transaction.courseId,
-        title: transaction.course.title,
-        enrollCount: 0,
-        earnings: 0,
+        teacherId: course.teacherId,
+        courseId: course.courseId,
+        title: course.title,
+        enrollCount: actualEnrollmentCount,  // ← Use actual enrollments count
+        earnings: totalEarnings,
       });
     }
-    const earnings = earningsMap.get(key);
-    earnings.enrollCount += 1;
-    earnings.earnings += (transaction.amount || 0) * 0.7;
   }
 
+  // Insert teacher earnings
   for (const [key, earningsData] of earningsMap) {
     try {
       await prisma.teacherEarnings.create({
@@ -251,9 +290,11 @@ async function seedData() {
           courseId: earningsData.courseId,
           title: earningsData.title,
           enrollCount: earningsData.enrollCount,
-          earnings: +earningsData.earnings.toFixed(2),
+          earnings: Math.round(earningsData.earnings), // Round to avoid floating point issues
         },
       });
+      
+      console.log(`Created earnings for course "${earningsData.title}": ${earningsData.enrollCount} students, $${(earningsData.earnings / 100).toFixed(2)}`);
     } catch (error) {
       console.error("Error creating teacher earnings:", error);
     }
@@ -266,7 +307,7 @@ async function seedData() {
       const progressData =
         ucp.progressData && Object.keys(ucp.progressData).length > 0
           ? ucp.progressData
-          : { sections: [] };
+          : Prisma.JsonNull;
 
       await prisma.userCourseProgress.create({
         data: {
