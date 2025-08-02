@@ -1,10 +1,15 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
+import { PrismaClient } from '@prisma/client';
 
 import CourseModel from "../models/prisma/courseModel";
 import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
+import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
+import TransactionModel from "../models/prisma/transactionModel";
 import cloudinary from "../utils/cloudinary";
+
+const prisma = new PrismaClient();
 
 export const listCourses = async (req: Request, res: Response) => {
   const { category } = req.query;
@@ -225,14 +230,28 @@ export const deleteCourse = async (req: Request, res: Response) => {
   const { courseId } = req.params;
   const { userId } = getAuth(req);
 
+  if (!userId) {
+    res.status(401).json({
+      success: false,
+      message: "Authentication required",
+    });
+    return;
+  }
+
   try {
+    console.log(`Attempting to delete course: ${courseId} by user: ${userId}`);
+
     const course = await CourseModel.findById(courseId);
 
     if (!course) {
-      res.status(404).json({ success: false, message: "Course not found" });
+      res.status(404).json({ 
+        success: false, 
+        message: "Course not found" 
+      });
       return;
     }
 
+    // Check ownership
     if (course.teacherId !== userId) {
       res.status(403).json({
         success: false,
@@ -241,19 +260,137 @@ export const deleteCourse = async (req: Request, res: Response) => {
       return;
     }
 
-    await CourseModel.delete(courseId);
-    await TeacherEarningsModel.delete(course.teacherId, course.courseId);
+    // Check if course has enrollments
+    const enrollmentCount = course.enrollments?.length || 0;
+    if (enrollmentCount > 0) {
+      res.status(400).json({
+        success: false,
+        message: `Cannot delete course with ${enrollmentCount} enrolled students. Please contact support for assistance.`,
+      });
+      return;
+    }
+
+    // Use Prisma transaction to ensure all related data is deleted properly
+    await prisma.$transaction(async (tx) => {
+      console.log("Starting deletion transaction...");
+
+      // 1. Delete user course progress records
+      const progressRecords = await tx.userCourseProgress.findMany({
+        where: { courseId }
+      });
+      
+      if (progressRecords.length > 0) {
+        console.log(`Deleting ${progressRecords.length} progress records...`);
+        await tx.userCourseProgress.deleteMany({
+          where: { courseId }
+        });
+      }
+
+      // 2. Delete transaction records
+      const transactionRecords = await tx.transaction.findMany({
+        where: { courseId }
+      });
+      
+      if (transactionRecords.length > 0) {
+        console.log(`Deleting ${transactionRecords.length} transaction records...`);
+        await tx.transaction.deleteMany({
+          where: { courseId }
+        });
+      }
+
+      // 3. Delete teacher earnings records
+      const earningsRecords = await tx.teacherEarnings.findMany({
+        where: { 
+          teacherId: course.teacherId,
+          courseId: courseId 
+        }
+      });
+      
+      if (earningsRecords.length > 0) {
+        console.log(`Deleting ${earningsRecords.length} earnings records...`);
+        await tx.teacherEarnings.deleteMany({
+          where: {
+            teacherId: course.teacherId,
+            courseId: courseId
+          }
+        });
+      }
+
+      // 4. Delete the course itself
+      console.log("Deleting course...");
+      await tx.course.delete({
+        where: { courseId }
+      });
+
+      console.log("Course deletion transaction completed successfully");
+    });
+
+    // Optional: Delete associated media from Cloudinary
+    try {
+      if (course.image) {
+        const publicId = extractPublicIdFromUrl(course.image);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+          console.log(`Deleted course image: ${publicId}`);
+        }
+      }
+
+      // Delete course videos if they exist
+      if (course.sections && Array.isArray(course.sections)) {
+        for (const section of course.sections) {
+          if (section.chapters && Array.isArray(section.chapters)) {
+            for (const chapter of section.chapters) {
+              if (chapter.video) {
+                const videoPublicId = extractPublicIdFromUrl(chapter.video);
+                if (videoPublicId) {
+                  await cloudinary.uploader.destroy(videoPublicId, { resource_type: 'video' });
+                  console.log(`Deleted chapter video: ${videoPublicId}`);
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (cloudinaryError) {
+      console.warn("Warning: Could not delete some media files from Cloudinary:", cloudinaryError);
+      // Don't fail the entire operation for media cleanup issues
+    }
 
     res.status(200).json({
       success: true,
-      message: "Course deleted successfully",
+      message: "Course and all associated data deleted successfully",
     });
+
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting course",
-      error: (error as Error).message,
-    });
+    console.error("Error deleting course:", error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Foreign key constraint')) {
+        res.status(400).json({
+          success: false,
+          message: "Cannot delete course due to existing enrollments or transactions. Please contact support.",
+          error: "Foreign key constraint violation"
+        });
+      } else if (error.message.includes('Record to delete does not exist')) {
+        res.status(404).json({
+          success: false,
+          message: "Course not found or already deleted",
+          error: error.message
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Error deleting course",
+          error: error.message,
+        });
+      }
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Unknown error occurred while deleting course",
+      });
+    }
   }
 };
 
@@ -319,3 +456,13 @@ export const getUploadVideoUrl = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Helper function to extract Cloudinary public ID from URL
+function extractPublicIdFromUrl(url: string): string | null {
+  try {
+    const matches = url.match(/\/v\d+\/(.+)\./);
+    return matches ? matches[1] : null;
+  } catch {
+    return null;
+  }
+}

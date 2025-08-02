@@ -162,14 +162,41 @@ const Courses = () => {
   };
 
   const handleDelete = async (course: Course) => {
-    if (window.confirm(`Are you sure you want to delete "${course.title}"? This action cannot be undone.`)) {
-      try {
-        await deleteCourse(course.courseId).unwrap();
-        toast.success('Course deleted successfully');
-        refetch();
-      } catch {
-        toast.error('Failed to delete course');
+    // Enhanced confirmation dialog
+    const enrollmentCount = course.enrollments?.length || 0;
+    const hasEnrollments = enrollmentCount > 0;
+    
+    let confirmMessage = `Are you sure you want to delete "${course.title}"? This action cannot be undone.`;
+    
+    if (hasEnrollments) {
+      confirmMessage = `Cannot delete "${course.title}" because it has ${enrollmentCount} enrolled students. Please contact support for assistance.`;
+      alert(confirmMessage);
+      return;
+    }
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    
+    try {
+      toast.loading('Deleting course...', { id: 'delete-course' });
+      
+      await deleteCourse(course.courseId).unwrap();
+      
+      toast.success('Course deleted successfully!', { id: 'delete-course' });
+      refetch();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      
+      let errorMessage = 'Failed to delete course';
+      
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage, { id: 'delete-course' });
     }
   };
 

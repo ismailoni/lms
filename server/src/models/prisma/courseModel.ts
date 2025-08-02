@@ -90,7 +90,85 @@ export class CourseModel {
   }
 
   static async delete(courseId: string) {
-    return prisma.course.delete({ where: { courseId } });
+    // Check for enrollments first
+    const course = await prisma.course.findUnique({
+      where: { courseId },
+      select: { enrollments: true, teacherId: true }
+    });
+
+    if (!course) {
+      throw new Error('Course not found');
+    }
+
+    if (course.enrollments && course.enrollments.length > 0) {
+      throw new Error(`Cannot delete course with ${course.enrollments.length} enrolled students`);
+    }
+
+    // Use transaction to ensure clean deletion
+    return await prisma.$transaction(async (tx) => {
+      // Delete related records first
+      await tx.userCourseProgress.deleteMany({
+        where: { courseId }
+      });
+
+      await tx.transaction.deleteMany({
+        where: { courseId }
+      });
+
+      await tx.teacherEarnings.deleteMany({
+        where: { 
+          teacherId: course.teacherId,
+          courseId: courseId 
+        }
+      });
+
+      // Finally delete the course
+      return await tx.course.delete({ 
+        where: { courseId } 
+      });
+    });
+  }
+
+  // New method to check if course can be deleted
+  static async canDelete(courseId: string): Promise<{
+    canDelete: boolean;
+    reason?: string;
+    enrollmentCount?: number;
+    transactionCount?: number;
+  }> {
+    const course = await prisma.course.findUnique({
+      where: { courseId },
+      select: { enrollments: true }
+    });
+
+    if (!course) {
+      return { canDelete: false, reason: 'Course not found' };
+    }
+
+    const enrollmentCount = course.enrollments?.length || 0;
+    const transactionCount = await prisma.transaction.count({
+      where: { courseId }
+    });
+
+    if (enrollmentCount > 0) {
+      return { 
+        canDelete: false, 
+        reason: `Course has ${enrollmentCount} enrolled students`,
+        enrollmentCount,
+        transactionCount
+      };
+    }
+
+    if (transactionCount > 0) {
+      return { 
+        canDelete: false, 
+        reason: `Course has ${transactionCount} transaction records`,
+        enrollmentCount,
+        transactionCount
+      };
+    }
+
+    return { canDelete: true, enrollmentCount: 0, transactionCount: 0 };
   }
 
   static async addEnrollment(courseId: string, userId: string) {
