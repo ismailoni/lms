@@ -74,7 +74,7 @@ const Landing = () => {
           <h1 className="landing__title">Courses</h1>
           <p className="landing__description">
             Learn from the best instructors in the world.
-            <br />
+            <br className="hidden sm:block" />
             Start your journey today.
           </p>
           <div className="landing__cta">

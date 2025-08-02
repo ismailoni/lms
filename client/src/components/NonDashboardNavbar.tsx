@@ -37,7 +37,7 @@ const NonDashboardNavbar = () => {
 
         {/* Desktop Search */}
         <div className="hidden md:flex nondashboard-navbar__search">
-          <div className="relative group">
+          <div className="relative group max-w-xs lg:max-w-md">
             <div className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-105' : ''}`}>
               <Link
                 href="/search"

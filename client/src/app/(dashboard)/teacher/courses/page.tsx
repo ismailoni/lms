@@ -293,14 +293,14 @@ const Courses = () => {
     <div className='teacher-courses min-h-screen bg-gray-900'>
       {/* Enhanced Header */}
       <div className="bg-gray-800 border-b border-gray-700">
-        <div className="px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-blue-400" />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                 My Courses
               </h1>
-              <p className="text-gray-400 mt-1">
+              <p className="text-sm sm:text-base text-gray-400 mt-1">
                 Create and manage your educational content
               </p>
             </div>
@@ -308,7 +308,7 @@ const Courses = () => {
             <Button
               onClick={handleCreateCourse}
               disabled={isCreating}
-              className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white gap-2 w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base whitespace-nowrap"
             >
               {isCreating ? (
                 <>
@@ -325,13 +325,13 @@ const Courses = () => {
           </div>
 
           {/* Enhanced Stats Cards with Real Data */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-4 sm:mt-6">
             <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-400" />
                   <div>
-                    <p className="text-2xl font-bold text-gray-100">{stats.total}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-100">{stats.total}</p>
                     <p className="text-xs text-gray-400">Total Courses</p>
                   </div>
                 </div>
@@ -339,11 +339,11 @@ const Courses = () => {
             </Card>
 
             <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-400" />
                   <div>
-                    <p className="text-2xl font-bold text-gray-100">{stats.published}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-100">{stats.published}</p>
                     <p className="text-xs text-gray-400">Published</p>
                   </div>
                 </div>
@@ -422,23 +422,23 @@ const Courses = () => {
       </div>
 
       {/* Enhanced Filters and Search */}
-      <div className="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+      <div className="bg-gray-800 border-b border-gray-700 px-4 sm:px-6 py-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
           {/* Search */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-full lg:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-blue-400"
+              className="pl-10 bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-blue-400 w-full"
             />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[180px] bg-gray-700 border-gray-600 text-gray-100">
+              <SelectTrigger className="w-full sm:w-[180px] bg-gray-700 border-gray-600 text-gray-100">
                 <Filter className="w-4 h-4 mr-2 text-gray-400" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -460,7 +460,7 @@ const Courses = () => {
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-[150px] bg-gray-700 border-gray-600 text-gray-100">
+              <SelectTrigger className="w-full sm:w-[150px] bg-gray-700 border-gray-600 text-gray-100">
                 <SortAsc className="w-4 h-4 mr-2 text-gray-400" />
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -478,12 +478,12 @@ const Courses = () => {
             </Select>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-gray-700 border border-gray-600 rounded-lg p-1">
+            <div className="flex items-center bg-gray-700 border border-gray-600 rounded-lg p-1 w-full sm:w-auto">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className={`px-3 py-1 ${
+                className={`flex-1 sm:flex-none px-3 py-1 ${
                   viewMode === 'grid' 
                     ? 'bg-blue-600 text-white hover:bg-blue-700' 
                     : 'text-gray-300 hover:bg-gray-600 hover:text-gray-100'
@@ -495,7 +495,7 @@ const Courses = () => {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className={`px-3 py-1 ${
+                className={`flex-1 sm:flex-none px-3 py-1 ${
                   viewMode === 'list' 
                     ? 'bg-blue-600 text-white hover:bg-blue-700' 
                     : 'text-gray-300 hover:bg-gray-600 hover:text-gray-100'
@@ -538,16 +538,16 @@ const Courses = () => {
       </div>
 
       {/* Course Content */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {filteredAndSortedCourses.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8 sm:py-12">
             {searchTerm || selectedCategory !== 'all' ? (
               <div>
-                <Search className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-100 mb-2">
+                <Search className="w-10 h-10 sm:w-12 sm:h-12 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-gray-100 mb-2">
                   No courses found
                 </h3>
-                <p className="text-gray-400 mb-4">
+                <p className="text-sm sm:text-base text-gray-400 mb-4">
                   Try adjusting your search or filter criteria
                 </p>
                 <Button
@@ -556,18 +556,18 @@ const Courses = () => {
                     setSearchTerm('');
                     setSelectedCategory('all');
                   }}
-                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-gray-100"
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-gray-100 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
                 >
                   Clear Filters
                 </Button>
               </div>
             ) : (
               <div>
-                <Sparkles className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-100 mb-2">
+                <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 text-blue-400 mx-auto mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-gray-100 mb-2">
                   Start your teaching journey
                 </h3>
-                <p className="text-gray-400 mb-6">
+                <p className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">
                   Create your first course and share your knowledge with the world
                 </p>
                 <Button 
@@ -583,13 +583,13 @@ const Courses = () => {
         ) : (
           <>
             {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-gray-100">
+                <h2 className="text-base sm:text-lg font-medium text-gray-100">
                   {filteredAndSortedCourses.length} course{filteredAndSortedCourses.length !== 1 ? 's' : ''}
                 </h2>
                 {(searchTerm || selectedCategory !== 'all') && (
-                  <Badge variant="outline" className="border-blue-400 text-blue-400">
+                  <Badge variant="outline" className="border-blue-400 text-blue-400 text-xs">
                     Filtered
                   </Badge>
                 )}
@@ -599,8 +599,8 @@ const Courses = () => {
             {/* Course Grid/List */}
             <div className={
               viewMode === 'grid' 
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                : 'space-y-4'
+                ? 'responsive-grid-courses'
+                : 'space-y-3 sm:space-y-4'
             }>
               {filteredAndSortedCourses.map((course) => {
                 // Get earnings data for this specific course
