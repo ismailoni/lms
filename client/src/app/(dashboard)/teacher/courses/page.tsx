@@ -161,6 +161,42 @@ const Courses = () => {
     console.log('Editing course:', course);
   };
 
+  // Add this helper function after the imports
+  function getErrorMessage(error: unknown): string {
+    // Handle Error instances
+    if (error instanceof Error) {
+      return error.message;
+    }
+    
+    // Handle string errors
+    if (typeof error === 'string') {
+      return error;
+    }
+    
+    // Handle object errors with nested structure
+    if (error && typeof error === 'object') {
+      // RTK Query error format: { data: { message: string } }
+      if ('data' in error) {
+        const errorData = (error as { data: unknown }).data;
+        if (errorData && typeof errorData === 'object') {
+          if ('message' in errorData && typeof errorData.message === 'string') {
+            return errorData.message;
+          }
+          if ('error' in errorData && typeof errorData.error === 'string') {
+            return errorData.error;
+          }
+        }
+      }
+      
+      // Direct message property
+      if ('message' in error && typeof error.message === 'string') {
+        return error.message;
+      }
+    }
+    
+    return 'Failed to delete course';
+  }
+
   const handleDelete = async (course: Course) => {
     // Enhanced confirmation dialog
     const enrollmentCount = course.enrollments?.length || 0;
@@ -185,17 +221,11 @@ const Courses = () => {
       
       toast.success('Course deleted successfully!', { id: 'delete-course' });
       refetch();
-    } catch (error: any) {
+    } catch (error: unknown) { 
       console.error('Delete error:', error);
       
-      let errorMessage = 'Failed to delete course';
-      
-      if (error?.data?.message) {
-        errorMessage = error.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-      
+      // FIXED: Clean, type-safe error handling
+      const errorMessage = getErrorMessage(error);
       toast.error(errorMessage, { id: 'delete-course' });
     }
   };
