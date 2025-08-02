@@ -3,10 +3,10 @@ import * as z from "zod";
 // Course Editor Schemas
 export const courseSchema = z.object({
   courseTitle: z.string().min(1, "Title is required"),
-  courseDescription: z.string().min(1, "Description is required"),
-  courseCategory: z.string().min(1, "Category is required"),
-  coursePrice: z.string(),
-  courseStatus: z.boolean(),
+  courseDescription: z.string().optional().default(""),
+  courseCategory: z.string().optional().default(""),
+  coursePrice: z.string().optional().default("0"),
+  courseStatus: z.boolean().default(false),
   courseImage: z.union([z.string().url().optional(), z.instanceof(File).optional()]).optional(),
 });
 

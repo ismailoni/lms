@@ -1,12 +1,13 @@
 import express from 'express';
 import multer from 'multer';
-import { createCourse, deleteCourse, getCourse, listCourses, updateCourse, getUploadVideoUrl } from '../controllers/courseController';
+import { createCourse, deleteCourse, getCourse, listCourses, listTeacherCourses, updateCourse, getUploadVideoUrl } from '../controllers/courseController';
 import { requireAuth } from '@clerk/express';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.get("/", listCourses)
+router.get("/teacher-courses", listTeacherCourses)
 router.post("/", requireAuth(), createCourse);
 
 router.get("/:courseId", getCourse);

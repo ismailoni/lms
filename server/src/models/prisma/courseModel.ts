@@ -31,8 +31,8 @@ export interface UpdateCourseData {
 export class CourseModel {
   static async findAll(category?: string) {
     const whereClause = category 
-      ? { category, status: "Published" } 
-      : { status: "Published" };
+    ? { category, status: "Published" } 
+    : { status: "Published" };
 
     return prisma.course.findMany({
       where: whereClause,
@@ -46,7 +46,22 @@ export class CourseModel {
       orderBy: { createdAt: "desc" },
     });
   }
-
+  
+  static async findByTeacherId() {
+    return prisma.course.findMany({
+      include: {
+        sections: {
+          include: {
+            chapters: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+  
+  
+  
   static async findById(courseId: string) {
     return prisma.course.findUnique({
       where: { courseId },
@@ -116,7 +131,7 @@ export class CourseModel {
     if (currentEnrollments.includes(userId)) {
       throw new Error('User is already enrolled in this course');
     }
-
+    
     // Add user to enrollments
     return prisma.course.update({
       where: { courseId },
@@ -163,7 +178,7 @@ export class CourseModel {
       await tx.section.deleteMany({
         where: { courseId }
       });
-
+      
       // Delete related records
       await tx.userCourseProgress.deleteMany({
         where: { courseId }
@@ -180,19 +195,6 @@ export class CourseModel {
     });
   }
 
-  static async findByTeacherId(teacherId: string) {
-    return prisma.course.findMany({
-      where: { teacherId },
-      include: {
-        sections: {
-          include: {
-            chapters: true
-          }
-        }
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
 }
 
 export default CourseModel;

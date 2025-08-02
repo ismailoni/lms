@@ -29,6 +29,23 @@ export const listCourses = async (req: Request, res: Response) => {
   }
 };
 
+export const listTeacherCourses = async (req: Request, res: Response) => {
+  try {
+    const courses = await CourseModel.findByTeacherId();
+    res.status(200).json({
+      success: true,
+      message: "Courses retrieved successfully",
+      data: courses,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching courses",
+      error: (error as Error).message,
+    });
+  }
+};
+
 export const getCourse = async (req: Request, res: Response) => {
   const { courseId } = req.params;
   try {
@@ -106,6 +123,10 @@ export const updateCourse = async (req: Request, res: Response) => {
   const { userId } = getAuth(req);
 
   try {
+    console.log("Updating course:", courseId);
+    console.log("Update data received:", updateData);
+    console.log("User ID:", userId);
+
     const course = await CourseModel.findById(courseId);
 
     if (!course) {
@@ -168,6 +189,35 @@ export const updateCourse = async (req: Request, res: Response) => {
       }
       updateData.price = price; // keep as dollars in DB
     }
+
+    // Validate status field
+    if (updateData.status !== undefined) {
+      if (!["Draft", "Published"].includes(updateData.status)) {
+        res.status(400).json({ success: false, message: "Invalid status. Must be 'Draft' or 'Published'" });
+        return;
+      }
+    }
+
+    // For draft courses, ensure required fields have defaults
+    if (updateData.status === "Draft") {
+      updateData.title = updateData.title || course.title || "Untitled Course";
+      updateData.category = updateData.category || course.category || "Uncategorized";
+      // description is optional in the schema, so we don't need to set a default
+    }
+
+    // For published courses, validate required fields
+    if (updateData.status === "Published") {
+      if (!updateData.title && !course.title) {
+        res.status(400).json({ success: false, message: "Title is required for published courses" });
+        return;
+      }
+      if (!updateData.category && !course.category) {
+        res.status(400).json({ success: false, message: "Category is required for published courses" });
+        return;
+      }
+    }
+
+    console.log("Processed update data:", updateData);
 
     // FIXED: Handle sections update with proper transaction
     if (updateData.sections) {

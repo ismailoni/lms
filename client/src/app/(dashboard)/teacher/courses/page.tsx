@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useCreateCourseMutation, useDeleteCourseMutation, useGetCoursesQuery, useGetTeacherEarningsBreakdownQuery } from '@/state/api';
+import { useCreateCourseMutation, useDeleteCourseMutation, useGetTeacherCoursesQuery, useGetTeacherEarningsBreakdownQuery } from '@/state/api';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
@@ -62,7 +62,7 @@ const Courses = () => {
     isLoading: isCoursesLoading,
     isError,
     refetch,
-  } = useGetCoursesQuery({});
+  } = useGetTeacherCoursesQuery("");
 
   // Get earnings data from the breakdown
   const { data: earningsData, isLoading: isEarningsLoading } = useGetTeacherEarningsBreakdownQuery(

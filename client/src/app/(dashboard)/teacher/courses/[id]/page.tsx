@@ -18,7 +18,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { courseSchema } from "@/lib/schemas";
 import {
-  centsToDollars,
   createCourseFormData,
   uploadAllVideos,
 } from "@/lib/utils";
@@ -123,24 +122,27 @@ const CourseEditor = () => {
       courseStatus: false,
       courseImage: undefined,
     },
+    mode: "onChange", // Enable real-time validation
   });
 
   // Watch for form changes
   const watchedValues = methods.watch();
 
   useEffect(() => {
+    console.log("Form values changed:", watchedValues);
     setHasUnsavedChanges(true);
   }, [watchedValues, sections]);
 
   useEffect(() => {
     if (course) {
+      console.log("Setting form values from course:", course);
       methods.reset({
-        courseTitle: course.title,
-        courseDescription: course.description,
-        courseCategory: course.category,
-        coursePrice: centsToDollars(course.price),
+        courseTitle: course.title || "",
+        courseDescription: course.description || "",
+        courseCategory: course.category || "",
+        coursePrice: (course.price || 0).toString(), // Price is already in dollars
         courseStatus: course.status === "Published",
-        courseImage: course.image,
+        courseImage: course.image || undefined,
       });
       dispatch(setSections(course.sections || []));
       setHasUnsavedChanges(false);
@@ -156,15 +158,31 @@ const CourseEditor = () => {
       watchedValues.coursePrice,
       watchedValues.courseImage,
     ];
-    const filledFields = fields.filter((field) => field && field !== "0").length;
+    const filledFields = fields.filter((field) => {
+      if (typeof field === 'string') {
+        return field.trim() !== "" && field !== "0";
+      }
+      return field !== undefined && field !== null;
+    }).length;
+    
     const sectionsScore = sections.length > 0 ? 1 : 0;
     const chaptersScore = sections.some((section) => section.chapters.length > 0)
       ? 1
       : 0;
 
-    return Math.round(
+    const percentage = Math.round(
       ((filledFields + sectionsScore + chaptersScore) / 7) * 100
     );
+    
+    console.log("Completion calculation:", {
+      fields,
+      filledFields,
+      sectionsScore,
+      chaptersScore,
+      percentage
+    });
+
+    return percentage;
   }, [watchedValues, sections]);
 
   // Get completion status
@@ -174,6 +192,10 @@ const CourseEditor = () => {
     try {
       toast.loading("Saving course...", { id: "save-course" });
 
+      // Validate form data before submission
+      console.log("Submitting course data:", data);
+      console.log("Sections data:", sections);
+
       const updatedSections = await uploadAllVideos(
         sections,
         id,
@@ -182,10 +204,17 @@ const CourseEditor = () => {
 
       const formData = createCourseFormData(data, updatedSections);
 
-      await updateCourse({
+      // Log the FormData contents for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(`FormData ${key}:`, value);
+      }
+
+      const result = await updateCourse({
         courseId: id,
         formData,
       }).unwrap();
+
+      console.log("Course update result:", result);
 
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
@@ -196,12 +225,40 @@ const CourseEditor = () => {
       await refetch();
     } catch (error) {
       console.error("Failed to update course:", error);
-      toast.error("Failed to save course. Please try again.", { id: "save-course" });
+      
+      // Extract error message from the API response
+      let errorMessage = "Failed to save course. Please try again.";
+      if (error && typeof error === 'object' && 'data' in error) {
+        const apiError = error as { data?: { message?: string } };
+        if (apiError.data?.message) {
+          errorMessage = apiError.data.message;
+        }
+      }
+      
+      toast.error(errorMessage, { id: "save-course" });
     }
   };
 
   const handleQuickSave = async () => {
-    await methods.handleSubmit(onSubmit)();
+    // Force validation to pass for draft courses
+    const formValues = methods.getValues();
+    console.log("Quick save - form values:", formValues);
+    
+    // Check if form is valid or if it's a draft
+    const isFormValid = methods.formState.isValid;
+    const isDraft = !formValues.courseStatus;
+    
+    if (isFormValid || isDraft) {
+      await onSubmit(formValues);
+    } else {
+      // For published courses, trigger validation
+      const result = await methods.trigger();
+      if (result) {
+        await onSubmit(formValues);
+      } else {
+        toast.error("Please fix validation errors before saving");
+      }
+    }
   };
 
   const previewCourse = () => {
@@ -321,6 +378,33 @@ const CourseEditor = () => {
                   {methods.watch("courseStatus") ? "Update Course" : "Save Draft"}
                 </>
               )}
+            </Button>
+            
+            {/* Debug Save Button - Remove this after testing */}
+            <Button
+              onClick={async () => {
+                console.log("Debug save clicked");
+                const values = methods.getValues();
+                console.log("Current form values:", values);
+                try {
+                  const formData = createCourseFormData(values, sections);
+                  console.log("Created form data");
+                  for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value);
+                  }
+                  const result = await updateCourse({ courseId: id, formData }).unwrap();
+                  console.log("Save result:", result);
+                  toast.success("Debug save successful!");
+                } catch (error) {
+                  console.error("Debug save error:", error);
+                  toast.error("Debug save failed");
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="border-yellow-600 text-yellow-300 hover:bg-yellow-600 hover:text-white"
+            >
+              Debug Save
             </Button>
           </div>
         </div>

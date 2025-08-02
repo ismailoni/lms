@@ -293,10 +293,12 @@ export const createCourseFormData = (
   sections: Section[]
 ): FormData => {
   const formData = new FormData();
-  formData.append("title", data.courseTitle);
-  formData.append("description", data.courseDescription);
-  formData.append("category", data.courseCategory);
-  formData.append("price", data.coursePrice.toString());
+  formData.append("title", data.courseTitle || "Untitled Course");
+  formData.append("description", data.courseDescription || "");
+  formData.append("category", data.courseCategory || "Uncategorized");
+  // Ensure price is properly formatted as a number
+  const price = parseFloat(data.coursePrice || "0") || 0;
+  formData.append("price", price.toString());
   formData.append("status", data.courseStatus ? "Published" : "Draft");
 
   // Handle course image - Fixed instanceof check

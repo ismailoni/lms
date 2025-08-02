@@ -111,6 +111,13 @@ export const api = createApi({
       providesTags: ["Courses"],
     }),
 
+    getTeacherCourses: build.query<Course[], string>({
+      query: () => ({
+        url: `/courses/teacher-courses`,
+      }),
+      providesTags: ["Courses"],
+    }),
+
     getCourse: build.query<Course, string>({
       query: (id) => `courses/${id}`,
       providesTags: (result, error, id) => [{ type: "Courses", id }],
@@ -140,6 +147,15 @@ export const api = createApi({
       invalidatesTags: (result, error, { courseId }) => [
         { type: "Courses", id: courseId },
       ],
+      async onQueryStarted({ courseId, formData }, { dispatch, queryFulfilled }) {
+        try {
+          console.log("Starting course update mutation for courseId:", courseId);
+          const result = await queryFulfilled;
+          console.log("Course update successful:", result);
+        } catch (error) {
+          console.error("Course update failed:", error);
+        }
+      },
     }),
 
     deleteCourse: build.mutation<{ message: string }, string>({
@@ -280,6 +296,7 @@ export const {
   useUpdateCourseMutation,
   useDeleteCourseMutation,
   useGetCoursesQuery,
+  useGetTeacherCoursesQuery,
   useGetCourseQuery,
   useGetUploadVideoUrlMutation,
   useGetTransactionsQuery,
