@@ -47,3 +47,21 @@ export const notificationSettingsSchema = z.object({
 export type NotificationSettingsFormData = z.infer<
   typeof notificationSettingsSchema
 >;
+
+// Theme Settings Schema
+export const themeSettingsSchema = z.object({
+  theme: z.enum(["light", "dark"]),
+});
+
+export type ThemeSettingsFormData = z.infer<typeof themeSettingsSchema>;
+
+// Combined User Settings Schema
+export const userSettingsSchema = z.object({
+  theme: z.enum(["light", "dark"]).optional(),
+  courseNotifications: z.boolean().optional(),
+  emailAlerts: z.boolean().optional(),
+  smsAlerts: z.boolean().optional(),
+  notificationFrequency: z.enum(["immediate", "daily", "weekly"]).optional(),
+});
+
+export type UserSettingsFormData = z.infer<typeof userSettingsSchema>;

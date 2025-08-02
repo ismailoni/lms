@@ -6,6 +6,7 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NonDashboardNavbar = () => {
   const {user} = useUser();
@@ -74,6 +75,9 @@ const NonDashboardNavbar = () => {
             )}
             <Bell className="nondashboard-navbar__notification-icon group-hover:text-blue-400 transition-colors" />
           </button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle variant="button" size="sm" />
 
           {/* User Authentication */}
           <SignedIn>

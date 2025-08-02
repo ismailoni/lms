@@ -97,6 +97,113 @@ input[type="color"] {
     --card: theme("colors.customgreys.primarybg");
     --card-foreground: theme("colors.white.50");
   }
+
+  .light {
+    --sidebar-background: theme("colors.white.100");
+    --sidebar-foreground: theme("colors.gray.900");
+    --sidebar-primary: theme("colors.primary.600");
+    --sidebar-primary-foreground: theme("colors.white.100");
+    --sidebar-accent: theme("colors.gray.100");
+    --sidebar-accent-foreground: theme("colors.gray.600");
+    --sidebar-border: theme("colors.gray.200");
+    --sidebar-ring: theme("colors.primary.600");
+    --popover: theme("colors.white.100");
+    --popover-foreground: theme("colors.gray.900");
+
+    --background: theme("colors.white.100");
+    --foreground: theme("colors.gray.900");
+
+    --primary: theme("colors.primary.600");
+    --primary-foreground: theme("colors.white.100");
+
+    --secondary: theme("colors.gray.100");
+    --secondary-foreground: theme("colors.gray.900");
+
+    --muted: theme("colors.gray.100");
+    --muted-foreground: theme("colors.gray.600");
+
+    --accent: theme("colors.gray.100");
+    --accent-foreground: theme("colors.gray.900");
+
+    --destructive: theme("colors.red.500");
+    --destructive-foreground: theme("colors.white.100");
+
+    --border: theme("colors.gray.200");
+    --input: theme("colors.gray.200");
+    --ring: theme("colors.primary.600");
+
+    --card: theme("colors.white.100");
+    --card-foreground: theme("colors.gray.900");
+  }
+}
+
+.bg-sidebar {
+  @apply bg-customgreys-primarybg;
+}
+
+/* Light mode adjustments */
+.light {
+  @apply bg-white text-gray-900;
+}
+
+.light .bg-sidebar {
+  @apply bg-white;
+}
+
+.light .bg-customgreys-primarybg {
+  @apply bg-white;
+}
+
+.light .bg-customgreys-secondarybg {
+  @apply bg-gray-50;
+}
+
+.light .bg-customgreys-darkerGrey {
+  @apply bg-gray-200;
+}
+
+.light .text-white-50 {
+  @apply text-gray-900;
+}
+
+.light .text-gray-300 {
+  @apply text-gray-700;
+}
+
+.light .text-gray-400 {
+  @apply text-gray-600;
+}
+
+.light .text-customgreys-dirtyGrey {
+  @apply text-gray-600;
+}
+
+.light .border-gray-700 {
+  @apply border-gray-300;
+}
+
+.light .border-gray-600 {
+  @apply border-gray-200;
+}
+
+.light .hover\:bg-gray-700\/50:hover {
+  @apply bg-gray-100;
+}
+
+.light .hover\:bg-gray-800:hover {
+  @apply bg-gray-100;
+}
+
+.light .bg-gray-800 {
+  @apply bg-white border border-gray-200;
+}
+
+.light .bg-gray-700\/50 {
+  @apply bg-gray-100;
+}
+
+.light .focus\:bg-gray-700\/50:focus {
+  @apply bg-gray-100;
 }
 
 .bg-sidebar {
@@ -1859,4 +1966,32 @@ input[type="color"] {
 
 .dashboard-navbar__sidebar-trigger {
   @apply text-customgreys-dirtyGrey hover:text-white-50 transition-colors;
+}
+
+/* Theme Toggle Styles */
+.theme-toggle-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.theme-toggle-button:hover::before {
+  left: 100%;
+}
+
+/* Enhanced theme transitions for smooth switching */
+html,
+body,
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
 }

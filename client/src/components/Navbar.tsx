@@ -8,6 +8,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
+import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
@@ -63,6 +64,9 @@ const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
             )}
             <Bell className="nondashboard-navbar__notification-icon group-hover:text-blue-400 transition-colors" />
           </button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle variant="button" size="sm" />
 
           <UserButton
             appearance={{
