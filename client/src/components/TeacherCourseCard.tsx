@@ -23,9 +23,11 @@ type ViewMode = "grid" | "list";
 interface TeacherCourseCardProps {
   course: Course;
   onEdit: (course: Course) => void;
-  onDelete: (course: Course) => Promise<void>;
+  onDelete: (course: Course) => void;
   isOwner: boolean;
   viewMode?: ViewMode; // Add this line
+  earnings?: number;
+  enrollmentCount?: number; // Add this to override the course.enrollments count if needed
 }
 
 const TeacherCourseCard = ({
@@ -34,13 +36,15 @@ const TeacherCourseCard = ({
   onDelete,
   isOwner,
   viewMode = "grid", // Default to grid view
+  enrollmentCount,
 }: TeacherCourseCardProps) => {
+  // Use provided enrollmentCount or fall back to course.enrollments length
+  const studentCount = enrollmentCount ?? course.enrollments?.length ?? 0;
+
   const formatPrice = (price?: number) => {
     if (!price || price === 0) return "Free";
     return `$${(price / 100).toFixed(2)}`;
   };
-
-  const enrollmentCount = course.enrollments?.length || 0;
 
   // List view layout
   if (viewMode === "list") {
@@ -56,7 +60,7 @@ const TeacherCourseCard = ({
                   alt={course.title}
                   width={80}
                   height={60}
-                  className="rounded-lg object-cover"
+                  className="rounded-lg object-cover max-w-[80px] max-h-[60px]"
                 />
               ) : (
                 <div className="w-20 h-15 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
@@ -80,7 +84,7 @@ const TeacherCourseCard = ({
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
                       <span>
-                        {enrollmentCount} student{enrollmentCount !== 1 ? "s" : ""}
+                        {studentCount} student{studentCount !== 1 ? "s" : ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -142,7 +146,7 @@ const TeacherCourseCard = ({
 
   // Grid view layout (default)
   return (
-    <Card className="course-card-teacher group hover:shadow-lg transition-all duration-200">
+    <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-all duration-200 group">
       <CardHeader className="course-card-teacher__header p-0">
         {course.image ? (
           <div className="relative">
@@ -151,7 +155,7 @@ const TeacherCourseCard = ({
               alt={course.title}
               width={370}
               height={200}
-              className="course-card-teacher__image w-full h-48 object-cover rounded-t-lg"
+              className="course-card-teacher__image w-full max-h-48 object-cover rounded-t-lg"
             />
             {/* Status Badge Overlay */}
             <Badge

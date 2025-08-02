@@ -59,7 +59,8 @@ import {
   ArrowDownRight,
   Eye,
   Sparkles,
-  Info
+  Info,
+  AreaChartIcon
 } from "lucide-react";
 
 const CHART_COLORS = ['#60A5FA', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#22D3EE'];
@@ -369,7 +370,7 @@ const TeacherEarningsDashboard = () => {
                   onClick={() => setChartType('area')}
                   className={`gap-1 ${chartType === 'area' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-600'}`}
                 >
-                  <AreaChart className="w-4 h-4" />
+                  <AreaChartIcon className="w-4 h-4" />
                 </Button>
                 <Button
                   variant={chartType === 'line' ? 'default' : 'ghost'}

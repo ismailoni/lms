@@ -1028,7 +1028,7 @@ input[type="color"] {
 }
 
 .course-card-teacher__header {
-  @apply p-0 h-[400px] overflow-hidden;
+  @apply p-0 overflow-hidden;
 }
 
 .course-card-teacher__image {

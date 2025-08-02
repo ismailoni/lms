@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -208,6 +209,12 @@ const CourseEditor = () => {
     }
   };
 
+  // Handle status toggle outside of form context
+  const handleStatusToggle = (checked: boolean) => {
+    methods.setValue("courseStatus", checked);
+    setHasUnsavedChanges(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Enhanced Dark Header */}
@@ -263,14 +270,12 @@ const CourseEditor = () => {
               {completionPercentage}% Complete
             </Badge>
 
-            {/* Enhanced Status Toggle */}
+            {/* Enhanced Status Toggle - FIXED: Use Switch directly instead of CustomFormField */}
             <div className="flex items-center gap-2">
-              <CustomFormField
-                name="courseStatus"
-                label=""
-                type="switch"
-                className="flex items-center space-x-2"
-                inputClassName={`${
+              <Switch
+                checked={methods.watch("courseStatus")}
+                onCheckedChange={handleStatusToggle}
+                className={`${
                   methods.watch("courseStatus")
                     ? "data-[state=checked]:bg-green-500"
                     : "bg-gray-600"
@@ -336,7 +341,7 @@ const CourseEditor = () => {
 
       {/* Enhanced Unsaved Changes Alert */}
       {hasUnsavedChanges && (
-        <Alert className="mx-6 mt-4 border-yellow-600 bg-yellow-900/20">
+        <Alert className="mx-6 mt-4 w-fit border-yellow-600 bg-yellow-900/20">
           <AlertCircle className="h-4 w-4 text-yellow-400" />
           <AlertDescription className="text-yellow-200">
             You have unsaved changes. Don&apos;t forget to save your progress!
@@ -344,6 +349,7 @@ const CourseEditor = () => {
         </Alert>
       )}
 
+      {/* FIXED: Wrap the entire form content with Form provider */}
       <Form {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -578,6 +584,7 @@ const CourseEditor = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* FIXED: Use CustomFormField properly within Form context */}
                             <CustomFormField
                               name="courseStatus"
                               label=""
@@ -629,6 +636,7 @@ const CourseEditor = () => {
         </form>
       </Form>
 
+      {/* Modals - These are already correctly implemented */}
       <ChapterModal />
       <SectionModal />
     </div>

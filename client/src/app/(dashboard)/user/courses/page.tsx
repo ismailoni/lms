@@ -115,40 +115,23 @@ const Courses = () => {
           progress < 100
         );
       } else if (activeTab === "completed") {
+        // Mock completion - you'd check actual completion status
         const progress = Math.random() * 100;
-        return matchesSearch && matchesCategory && progress === 100;
+        return matchesSearch && matchesCategory && progress >= 100;
       }
 
       return matchesSearch && matchesCategory;
     });
 
-    // Sort courses
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "recent":
-          // Mock last accessed - you'd use real data
-          return Math.random() - 0.5;
-        case "progress":
-          // Mock progress comparison
-          return Math.random() - 0.5;
-        case "alphabetical":
-          return (a.title || "").localeCompare(b.title || "");
-        case "newest":
-          return (
-            new Date(b.createdAt || 0).getTime() -
-            new Date(a.createdAt || 0).getTime()
-          );
-        default:
-          return 0;
-      }
-    });
-
-    // Calculate stats
+    // Calculate stats - enrollments is now String[]
     const totalCourses = courses.length;
-    const inProgressCourses = Math.floor(totalCourses * 0.6); // Mock
-    const completedCourses = Math.floor(totalCourses * 0.3); // Mock
-    const totalHours = totalCourses * 8; // Mock: 8 hours per course
-    const avgProgress = 65; // Mock average progress
+    const inProgressCourses = Math.floor(totalCourses * 0.6); // Mock data
+    const completedCourses = Math.floor(totalCourses * 0.3); // Mock data
+    const totalHours = courses.reduce((acc, course) => {
+      // Mock calculation - you'd calculate from actual course content
+      const sectionsCount = Array.isArray(course.sections) ? course.sections.length : 0;
+      return acc + (sectionsCount * 2); // Assume 2 hours per section
+    }, 0);
 
     return {
       filteredCourses: filtered,
@@ -157,7 +140,6 @@ const Courses = () => {
         inProgressCourses,
         completedCourses,
         totalHours,
-        avgProgress,
       },
     };
   }, [courses, searchTerm, selectedCategory, sortBy, activeTab]);

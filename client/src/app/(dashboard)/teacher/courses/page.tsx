@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useCreateCourseMutation, useDeleteCourseMutation, useGetCoursesQuery } from '@/state/api';
+import { useCreateCourseMutation, useDeleteCourseMutation, useGetCoursesQuery, useGetTeacherEarningsBreakdownQuery } from '@/state/api';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState } from 'react';
@@ -24,9 +24,11 @@ import {
   CheckCircle2,
   Clock,
   SortAsc,
-  Sparkles
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPrice } from '@/lib/utils';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc' | 'students' | 'revenue';
@@ -52,13 +54,21 @@ const SORT_OPTIONS = [
 
 const Courses = () => {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
+  const teacherId = user?.id || "";
+  
   const {
     data: courses,
-    isLoading,
+    isLoading: isCoursesLoading,
     isError,
     refetch,
   } = useGetCoursesQuery({ category: 'all' });
+
+  // Get earnings data from the breakdown
+  const { data: earningsData, isLoading: isEarningsLoading } = useGetTeacherEarningsBreakdownQuery(
+    teacherId,
+    { skip: !isLoaded || !teacherId }
+  );
 
   const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
   const [deleteCourse] = useDeleteCourseMutation();
@@ -67,6 +77,31 @@ const Courses = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  // Calculate statistics using actual earnings data
+  const stats = useMemo(() => {
+    if (!courses || !earningsData) {
+      return { total: 0, published: 0, draft: 0, totalStudents: 0, totalRevenue: 0 };
+    }
+    
+    const userCourses = courses.filter(course => course.teacherId === user?.id);
+    
+    // Calculate total students from course enrollments - now using String[]
+    const totalStudents = userCourses.reduce((acc, course) => 
+      acc + (course.enrollments?.length || 0), 0
+    );
+
+    // Use actual earnings data for revenue
+    const totalRevenue = earningsData.totalEarnings || 0;
+    
+    return {
+      total: userCourses.length,
+      published: userCourses.filter(course => course.status === 'Published').length,
+      draft: userCourses.filter(course => course.status === 'Draft').length,
+      totalStudents,
+      totalRevenue,
+    };
+  }, [courses, user?.id, earningsData]);
 
   // Filter and sort courses
   const filteredAndSortedCourses = useMemo(() => {
@@ -82,7 +117,7 @@ const Courses = () => {
       return matchesSearch && matchesCategory && isOwner;
     });
 
-    // Sort courses
+    // Sort courses - enrollments is now String[]
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
@@ -94,36 +129,36 @@ const Courses = () => {
         case 'title-desc':
           return b.title.localeCompare(a.title);
         case 'students':
+          // enrollments is now String[] so we can directly access length
           return (b.enrollments?.length || 0) - (a.enrollments?.length || 0);
         case 'revenue':
-          return (b.price || 0) - (a.price || 0);
+          // Use actual earnings data for revenue sorting
+          const aEarnings = earningsData?.breakdown?.find(e => e.courseId === a.courseId)?.earnings || 0;
+          const bEarnings = earningsData?.breakdown?.find(e => e.courseId === b.courseId)?.earnings || 0;
+          return bEarnings - aEarnings;
         default:
           return 0;
       }
     });
 
     return filtered;
-  }, [courses, searchTerm, selectedCategory, sortBy, user?.id]);
+  }, [courses, searchTerm, selectedCategory, sortBy, user?.id, earningsData]);
 
-  // Calculate statistics
-  const stats = useMemo(() => {
-    if (!courses) return { total: 0, published: 0, draft: 0, totalStudents: 0, totalRevenue: 0 };
+  // Get top performing course from earnings data
+  const topPerformingCourse = useMemo(() => {
+    if (!earningsData?.breakdown?.length) return null;
     
-    const userCourses = courses.filter(course => course.teacherId === user?.id);
-    
-    return {
-      total: userCourses.length,
-      published: userCourses.filter(course => course.status === 'Published').length,
-      draft: userCourses.filter(course => course.status === 'Draft').length,
-      totalStudents: userCourses.reduce((acc, course) => acc + (course.enrollments?.length || 0), 0),
-      totalRevenue: userCourses.reduce((acc, course) => acc + ((course.price || 0) * (course.enrollments?.length || 0)), 0),
-    };
-  }, [courses, user?.id]);
+    return earningsData.breakdown.reduce((top, course) => 
+      course.earnings > top.earnings ? course : top, 
+      earningsData.breakdown[0]
+    );
+  }, [earningsData]);
 
   const handleEdit = (course: Course) => {
     router.push(`/teacher/courses/${course.courseId}`, {
       scroll: false,
     });
+    console.log('Editing course:', course);
   };
 
   const handleDelete = async (course: Course) => {
@@ -161,6 +196,8 @@ const Courses = () => {
       toast.error('Failed to create course', { id: 'create-course' });
     }
   };
+
+  const isLoading = isCoursesLoading || isEarningsLoading;
 
   if (isLoading) {
     return (
@@ -230,7 +267,7 @@ const Courses = () => {
             </Button>
           </div>
 
-          {/* Stats Cards */}
+          {/* Enhanced Stats Cards with Real Data */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
             <Card className="bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
@@ -285,13 +322,45 @@ const Courses = () => {
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-green-400" />
                   <div>
-                    <p className="text-2xl font-bold text-gray-100">${stats.totalRevenue}</p>
+                    <p className="text-2xl font-bold text-gray-100">
+                      {formatPrice(stats.totalRevenue)}
+                    </p>
                     <p className="text-xs text-gray-400">Revenue</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Top Performing Course Card */}
+          {topPerformingCourse && (
+            <div className="mt-4">
+              <Card className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border-green-700/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-900/40 rounded-lg">
+                      <TrendingUp className="w-4 h-4 text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-100 text-sm">
+                        🏆 Top Performing Course
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        <span className="font-medium text-gray-300">{topPerformingCourse.title}</span>
+                        {' • '}
+                        <span className="text-green-400">{formatPrice(topPerformingCourse.earnings)}</span>
+                        {' • '}
+                        <span>{topPerformingCourse.enrollCount} students</span>
+                      </p>
+                    </div>
+                    <Badge className="bg-green-600 text-white text-xs">
+                      Top Earner
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 
@@ -476,16 +545,20 @@ const Courses = () => {
                 ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                 : 'space-y-4'
             }>
-              {filteredAndSortedCourses.map((course) => (
-                <TeacherCourseCard
-                  key={course.courseId}
-                  course={course}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  isOwner={course.teacherId === user?.id}
-                  viewMode={viewMode}
-                />
-              ))}
+              {filteredAndSortedCourses.map((course) => {
+                // Get earnings data for this specific course
+                
+                return (
+                  <TeacherCourseCard
+                    key={course.courseId}
+                    course={course}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isOwner={course.teacherId === user?.id}
+                    viewMode={viewMode}
+                  />
+                );
+              })}
             </div>
           </>
         )}

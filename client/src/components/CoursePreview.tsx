@@ -2,9 +2,13 @@ import { formatPrice } from "@/lib/utils";
 import React from "react";
 import Image from "next/image";
 import AccordionSections from "./AccordionSections";
+import { Users } from "lucide-react";
 
-const CoursePreview = ({ course }: CoursePreviewProps) => {
+const CoursePreview = ({ course }: { course: Course }) => {
   const price = formatPrice(course.price);
+  // enrollments is now String[] so we can directly access length
+  const enrollmentCount = course.enrollments?.length || 0;
+
   return (
     <div className="course-preview">
       <div className="course-preview__container">
@@ -39,6 +43,15 @@ const CoursePreview = ({ course }: CoursePreviewProps) => {
             <span className="font-bold text-lg">Total Amount</span>
             <span className="font-bold text-lg">{price}</span>
         </div>
+      </div>
+      <div className="course-preview__stats">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-gray-400" />
+          <span className="text-sm text-gray-300">
+            {enrollmentCount} student{enrollmentCount !== 1 ? 's' : ''} enrolled
+          </span>
+        </div>
+        {/* ...other stats... */}
       </div>
     </div>
   );

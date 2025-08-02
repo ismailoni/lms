@@ -47,9 +47,7 @@ declare global {
     level: "Beginner" | "Intermediate" | "Advanced";
     status: "Draft" | "Published";
     sections: Section[];
-    enrollments?: Array<{
-      userId: string;
-    }>;
+    enrollments: string[]; // Array of user IDs
     createdAt: string; // Add this line
     updatedAt?: string; // Optional: also add updatedAt for completeness
   }

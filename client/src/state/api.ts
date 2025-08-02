@@ -209,11 +209,19 @@ export const api = createApi({
         method: "POST",
         body: transaction,
       }),
+      invalidatesTags: ["Courses"], // This will refresh course data including enrollments
     }),
 
     getUserEnrolledCourses: build.query<Course[], string>({
       query: (userId) => `${userId}/enrolled-courses`,
       providesTags: ["Courses", "UserCourseProgress"],
+      transformResponse: (response: Course[]) => {
+        // Ensure enrollments is always an array
+        return response.map(course => ({
+          ...course,
+          enrollments: course.enrollments || []
+        }));
+      },
     }),
 
     getUserCourseProgress: build.query<
