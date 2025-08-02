@@ -14,7 +14,7 @@ const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
   const { user } = useUser();
   const userRole = user?.publicMetadata?.userType as "student" | "teacher";
   const [showQuickActions, setShowQuickActions] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(3); // Mock notification count
+  const [notificationCount] = useState(3); // Mock notification count
 
   return (
     <nav className="dashboard-navbar">

@@ -253,7 +253,7 @@ export function EnhancedSearchBar({
               className="w-full px-3 py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               <Search className="w-4 h-4" />
-              Search for "{query}"
+              Search for &quot;{query}&quot;
             </button>
           </div>
         </div>

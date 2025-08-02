@@ -49,7 +49,6 @@ const TeacherCourseCard = ({
   };
 
   // Calculate course statistics
-  const sectionCount = course.sections?.length || 0;
   const chapterCount = course.sections?.reduce((acc, section) => acc + (section.chapters?.length || 0), 0) || 0;
   const estimatedEarnings = studentCount * (course.price || 0) / 100;
 

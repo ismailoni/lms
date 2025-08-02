@@ -35,7 +35,7 @@ export function ProgressTracker({
   const completedSteps = steps.filter(step => step.status === "completed").length;
   const progressPercentage = (completedSteps / steps.length) * 100;
 
-  const getStepIcon = (step: ProgressStep, index: number) => {
+  const getStepIcon = (step: ProgressStep, _index: number) => {
     if (step.status === "completed") {
       return <CheckCircle className="w-5 h-5 text-green-400" />;
     }
@@ -45,7 +45,7 @@ export function ProgressTracker({
     return <Circle className="w-5 h-5 text-gray-500" />;
   };
 
-  const getStepStyles = (step: ProgressStep, index: number) => ({
+  const getStepStyles = (step: ProgressStep, _index: number) => ({
     wrapper: cn(
       "flex items-center gap-3 p-3 rounded-lg transition-all duration-300 cursor-pointer",
       {
