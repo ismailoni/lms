@@ -87,7 +87,7 @@ export function ProgressTracker({
 
         {/* Steps */}
         <div className="space-y-3">
-          {steps.map((step, index) => {
+          {steps.map((step) => {
             const styles = getStepStyles(step);
             return (
               <div
@@ -143,7 +143,7 @@ export function ProgressTracker({
           style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
         />
 
-        {steps.map((step, index) => {
+        {steps.map((step) => {
           const styles = getStepStyles(step);
           return (
             <div
