@@ -62,7 +62,7 @@ const Courses = () => {
     isLoading: isCoursesLoading,
     isError,
     refetch,
-  } = useGetCoursesQuery({ category: 'all' });
+  } = useGetCoursesQuery({});
 
   // Get earnings data from the breakdown
   const { data: earningsData, isLoading: isEarningsLoading } = useGetTeacherEarningsBreakdownQuery(
