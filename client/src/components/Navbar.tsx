@@ -1,15 +1,20 @@
 "use client";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
-import { Bell, BookOpen } from "lucide-react";
+import { Bell, Search, Zap } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
 import { cn } from "@/lib/utils";
 
 const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
   const { user } = useUser();
   const userRole = user?.publicMetadata?.userType as "student" | "teacher";
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3); // Mock notification count
 
   return (
     <nav className="dashboard-navbar">
@@ -23,29 +28,49 @@ const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
               <Link
                 scroll={false}
                 href="/search"
-                className={cn("dashboard-navbar__search-input", {
+                className={cn("dashboard-navbar__search-input group-hover:scale-105 transition-transform", {
                   "!bg-customgreys-secondarybg": isCoursePage,
                 })}
               >
                 <span className="hidden sm:inline">Search Courses</span>
                 <span className="sm:hidden">Search</span>
               </Link>
-              <BookOpen className="dashboard-navbar__search-icon" size={18} />
+              <Search className="dashboard-navbar__search-icon group-hover:text-blue-400 transition-colors" size={18} />
             </div>
           </div>
         </div>
         <div className="dashboard-navbar__actions">
-          <button className="nondashboard-navbar__notification-button">
-            <span className="nondashboard-navbar__notification-indicator"></span>
-            <Bell className="nondashboard-navbar__notification-icon" />
+          {/* Quick Actions Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowQuickActions(!showQuickActions)}
+            className="relative bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 text-blue-400 hover:text-blue-300 transition-all duration-300"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Quick Actions</span>
+            <Badge className="ml-2 bg-blue-600 text-white text-xs px-1 h-4">
+              New
+            </Badge>
+          </Button>
+
+          {/* Enhanced Notification Button */}
+          <button className="relative nondashboard-navbar__notification-button group">
+            {notificationCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs h-5 w-5 rounded-full flex items-center justify-center p-0 animate-pulse">
+                {notificationCount}
+              </Badge>
+            )}
+            <Bell className="nondashboard-navbar__notification-icon group-hover:text-blue-400 transition-colors" />
           </button>
+
           <UserButton
             appearance={{
               baseTheme: dark,
               elements: {
                 button: {
                   userButtonIdentifier: "text-customgerys-dirtyGrey",
-                  userButtonBox: "scale-90 sm:scale-100",
+                  userButtonBox: "scale-90 sm:scale-100 hover:scale-105 transition-transform",
                 },
               },
             }}
@@ -56,6 +81,16 @@ const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
             }
           />
         </div>
+
+        {/* Quick Actions Menu */}
+        {showQuickActions && (
+          <div className="absolute top-full right-0 mt-2 z-50">
+            <QuickActionsMenu 
+              userRole={userRole || "student"} 
+              onAction={() => setShowQuickActions(false)}
+            />
+          </div>
+        )}
       </div>
     </nav>
   );

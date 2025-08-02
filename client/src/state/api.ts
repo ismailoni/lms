@@ -120,7 +120,7 @@ export const api = createApi({
 
     getCourse: build.query<Course, string>({
       query: (id) => `courses/${id}`,
-      providesTags: (result, error, id) => [{ type: "Courses", id }],
+      providesTags: (_result, _error, id) => [{ type: "Courses", id }],
     }),
 
     createCourse: build.mutation<
@@ -144,10 +144,10 @@ export const api = createApi({
         method: "PUT",
         body: formData,
       }),
-      invalidatesTags: (result, error, { courseId }) => [
+      invalidatesTags: (_result, _error, { courseId }) => [
         { type: "Courses", id: courseId },
       ],
-      async onQueryStarted({ courseId, formData }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ courseId }, { queryFulfilled }) {
         try {
           console.log("Starting course update mutation for courseId:", courseId);
           const result = await queryFulfilled;

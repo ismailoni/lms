@@ -205,7 +205,7 @@ const CourseEditor = () => {
       const formData = createCourseFormData(data, updatedSections);
 
       // Log the FormData contents for debugging
-      for (let [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         console.log(`FormData ${key}:`, value);
       }
 
@@ -356,29 +356,58 @@ const CourseEditor = () => {
               size="sm"
               onClick={previewCourse}
               disabled={!isReadyToPublish}
-              className="gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-gray-100 disabled:text-gray-500"
+              className="gap-2 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed group"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
               Preview
             </Button>
 
-            <Button
-              onClick={handleQuickSave}
-              disabled={isSaving || !hasUnsavedChanges}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600"
-            >
-              {isSaving ? (
+            <div className="relative group">
+              <Button
+                onClick={handleQuickSave}
+                disabled={isSaving || !hasUnsavedChanges}
+                className={`gap-2 text-white disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-300 relative overflow-hidden ${
+                  isSaving 
+                    ? 'bg-gray-600 cursor-not-allowed' 
+                    : hasUnsavedChanges 
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25' 
+                      : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
+                }`}
+              >
+                {/* Animated background on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saving...
+                  </>
+                ) : hasUnsavedChanges ? (
+                  <>
+                    <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    {methods.watch("courseStatus") ? "Update Course" : "Save Draft"}
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    Saved
+                  </>
+                )}
+              </Button>
+              
+              {/* Enhanced success animation */}
+              {!hasUnsavedChanges && !isSaving && lastSaved && (
                 <>
-                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  {methods.watch("courseStatus") ? "Update Course" : "Save Draft"}
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full" />
                 </>
               )}
-            </Button>
+              
+              {/* Progress indicator for unsaved changes */}
+              {hasUnsavedChanges && !isSaving && (
+                <div className="absolute bottom-0 left-0 h-0.5 bg-yellow-400 w-full animate-pulse" />
+              )}
+            </div>
             
             {/* Debug Save Button - Remove this after testing */}
             <Button
@@ -389,7 +418,7 @@ const CourseEditor = () => {
                 try {
                   const formData = createCourseFormData(values, sections);
                   console.log("Created form data");
-                  for (let [key, value] of formData.entries()) {
+                  for (const [key, value] of formData.entries()) {
                     console.log(`${key}:`, value);
                   }
                   const result = await updateCourse({ courseId: id, formData }).unwrap();
@@ -410,18 +439,55 @@ const CourseEditor = () => {
         </div>
 
         {/* Enhanced Progress Bar */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
-            <span>Course Completion</span>
-            <span>{completionPercentage}%</span>
+        <div className="mt-6">
+          <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
+            <div className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span className="font-medium">Course Completion</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-lg">{completionPercentage}%</span>
+              {isReadyToPublish && (
+                <Badge variant="default" className="bg-green-600 text-white animate-pulse">
+                  Ready to Publish!
+                </Badge>
+              )}
+            </div>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
+          <div className="relative w-full bg-gray-700/50 rounded-full h-3 overflow-hidden">
             <div
-              className={`h-2 rounded-full transition-all duration-300 ${
-                isReadyToPublish ? 'bg-green-500' : 'bg-blue-500'
+              className={`h-full rounded-full transition-all duration-700 ease-out relative ${
+                isReadyToPublish 
+                  ? 'bg-gradient-to-r from-green-500 to-green-400' 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-500'
               }`}
               style={{ width: `${completionPercentage}%` }}
-            />
+            >
+              {/* Animated shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+            </div>
+            
+            {/* Milestone markers */}
+            <div className="absolute inset-0 flex justify-between items-center px-1">
+              {[20, 40, 60, 80].map((milestone) => (
+                <div
+                  key={milestone}
+                  className={`w-1 h-1 rounded-full transition-colors duration-300 ${
+                    completionPercentage >= milestone 
+                      ? 'bg-white' 
+                      : 'bg-gray-600'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+          
+          {/* Progress indicators */}
+          <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+            <span>Basic Info</span>
+            <span>Content</span>
+            <span>Settings</span>
+            <span>Ready!</span>
           </div>
         </div>
       </div>
