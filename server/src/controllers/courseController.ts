@@ -169,55 +169,127 @@ export const updateCourse = async (req: Request, res: Response) => {
       updateData.price = price; // keep as dollars in DB
     }
 
-    // Handle sections
+    // FIXED: Handle sections update with proper transaction
     if (updateData.sections) {
       const sectionsData =
         typeof updateData.sections === "string"
           ? JSON.parse(updateData.sections)
           : updateData.sections;
 
-      updateData.sections = {
-        deleteMany: {}, // wipe old sections
-        create: sectionsData.map((section: any) => ({
-          sectionId: section.sectionId || uuidv4(),
-          sectionTitle: section.sectionTitle,
-          sectionDescription: section.sectionDescription,
-          chapters: {
-          create: (section.chapters || []).map((chapter: any) => ({
-              chapterId: chapter.chapterId || uuidv4(),
-              title: chapter.title,
-              content: chapter.content,
-              type: chapter.type,
-              video: chapter.video || "",
-            })),
-          },
-        })),
-      };
-    }
-
-    const updatedCourse = await CourseModel.update(courseId, updateData);
-
-    // If title changed, sync TeacherEarnings title
-    if (updateData.title) {
-      const earningsRecord =
-        await TeacherEarningsModel.findByTeacherIdAndCourseId(
-          course.teacherId,
-          course.courseId
-        );
-
-      if (earningsRecord) {
-        await TeacherEarningsModel.update(course.teacherId, course.courseId, {
-          title: updateData.title,
+      // Use transaction to update course and sections atomically
+      const updatedCourse = await prisma.$transaction(async (tx) => {
+        // First, delete existing sections and chapters
+        await tx.chapter.deleteMany({
+          where: {
+            section: {
+              courseId: courseId
+            }
+          }
         });
+
+        await tx.section.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // Update course data (excluding sections)
+        const { sections: _, ...courseUpdateData } = updateData;
+        const course = await tx.course.update({
+          where: { courseId },
+          data: courseUpdateData,
+        });
+
+        // Create new sections with chapters
+        if (sectionsData && sectionsData.length > 0) {
+          for (const sectionData of sectionsData) {
+            const section = await tx.section.create({
+              data: {
+                sectionId: sectionData.sectionId || uuidv4(),
+                courseId: courseId,
+                sectionTitle: sectionData.sectionTitle,
+                sectionDescription: sectionData.sectionDescription || "",
+              }
+            });
+
+            // Create chapters for this section
+            if (sectionData.chapters && sectionData.chapters.length > 0) {
+              for (const chapterData of sectionData.chapters) {
+                await tx.chapter.create({
+                  data: {
+                    chapterId: chapterData.chapterId || uuidv4(),
+                    sectionId: section.sectionId,
+                    title: chapterData.title,
+                    content: chapterData.content || "",
+                    type: chapterData.type || "Text",
+                    video: chapterData.video || "",
+                  }
+                });
+              }
+            }
+          }
+        }
+
+        // Return updated course with sections and chapters
+        return await tx.course.findUnique({
+          where: { courseId },
+          include: {
+            sections: {
+              include: {
+                chapters: true
+              }
+            }
+          }
+        });
+      });
+
+      // If title changed, sync TeacherEarnings title
+      if (updateData.title) {
+        const earningsRecord =
+          await TeacherEarningsModel.findByTeacherIdAndCourseId(
+            course.teacherId,
+            course.courseId
+          );
+
+        if (earningsRecord) {
+          await TeacherEarningsModel.update(course.teacherId, course.courseId, {
+            title: updateData.title,
+          });
+        }
       }
+
+      res.status(200).json({
+        success: true,
+        message: "Course updated successfully",
+        data: updatedCourse,
+      });
+
+    } else {
+      // Handle updates without sections changes
+      const updatedCourse = await CourseModel.update(courseId, updateData);
+
+      // If title changed, sync TeacherEarnings title
+      if (updateData.title) {
+        const earningsRecord =
+          await TeacherEarningsModel.findByTeacherIdAndCourseId(
+            course.teacherId,
+            course.courseId
+          );
+
+        if (earningsRecord) {
+          await TeacherEarningsModel.update(course.teacherId, course.courseId, {
+            title: updateData.title,
+          });
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Course updated successfully",
+        data: updatedCourse,
+      });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Course updated successfully",
-      data: updatedCourse,
-    });
   } catch (error) {
+    console.error("Error updating course:", error);
     res.status(500).json({
       success: false,
       message: "Error updating course",

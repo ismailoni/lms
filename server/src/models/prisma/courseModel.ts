@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
@@ -11,63 +12,63 @@ export interface CreateCourseData {
   category: string;
   image?: string;
   price?: number;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  status: 'Draft' | 'Published';
-  sections?: any[];
-  enrollments?: string[];
+  level?: string;
+  status?: string;
 }
 
-export interface UpdateCourseData extends Partial<CreateCourseData> {
-  imageUrl?: string;
+export interface UpdateCourseData {
+  title?: string;
+  description?: string;
+  category?: string;
+  image?: string;
+  price?: number;
+  level?: string;
+  status?: string;
+  sections?: any;
+  enrollments?: string[];
 }
 
 export class CourseModel {
   static async findAll(category?: string) {
-    const whereClause = category && category !== 'all' ? { category } : {};
+    const whereClause = category 
+      ? { category, status: "Published" } 
+      : { status: "Published" };
 
-    const courses = await prisma.course.findMany({
+    return prisma.course.findMany({
       where: whereClause,
-      orderBy: { createdAt: 'desc' },
+      include: {
+        sections: {
+          include: {
+            chapters: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
     });
-
-    // Ensure enrollments and sections are arrays
-    return courses.map(course => ({
-      ...course,
-      enrollments: course.enrollments || [], // Now String[] from database
-      sections: (course.sections as any[]) || []
-    }));
   }
 
   static async findById(courseId: string) {
-    const course = await prisma.course.findUnique({
+    return prisma.course.findUnique({
       where: { courseId },
+      include: {
+        sections: {
+          include: {
+            chapters: true
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      },
     });
-
-    if (!course) return null;
-
-    // Ensure enrollments and sections are arrays
-    return {
-      ...course,
-      enrollments: course.enrollments || [], // Now String[] from database
-      sections: (course.sections as any[]) || []
-    };
   }
 
   static async create(data: CreateCourseData) {
     return prisma.course.create({
       data: {
-        teacherId: data.teacherId,
-        teacherName: data.teacherName,
-        teacherImage: data.teacherImage,
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        image: data.image,
-        price: data.price,
-        level: data.level,
-        status: data.status,
-        sections: data.sections,
-        enrollments: data.enrollments || [], // Default to empty array
+        courseId: uuidv4(),
+        ...data,
+        enrollments: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
   }
@@ -75,51 +76,101 @@ export class CourseModel {
   static async update(courseId: string, data: UpdateCourseData) {
     const updateData: any = { ...data, updatedAt: new Date() };
     
-    // Handle sections and enrollments properly
-    if (data.sections !== undefined) {
-      updateData.sections = data.sections && data.sections.length > 0 ? data.sections : null;
-    }
+    // Handle enrollments properly
     if (data.enrollments !== undefined) {
       updateData.enrollments = data.enrollments || []; // Always array for String[]
+    }
+
+    // Remove sections from updateData as it's handled separately
+    if (updateData.sections) {
+      delete updateData.sections;
     }
 
     return prisma.course.update({
       where: { courseId },
       data: updateData,
+      include: {
+        sections: {
+          include: {
+            chapters: true
+          }
+        }
+      },
     });
   }
 
-  static async delete(courseId: string) {
-    // Check for enrollments first
+  // FIXED: Add missing addEnrollment method
+  static async addEnrollment(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { courseId },
-      select: { enrollments: true, teacherId: true }
+      select: { enrollments: true }
     });
 
     if (!course) {
       throw new Error('Course not found');
     }
 
-    if (course.enrollments && course.enrollments.length > 0) {
-      throw new Error(`Cannot delete course with ${course.enrollments.length} enrolled students`);
+    const currentEnrollments = course.enrollments || [];
+    
+    // Check if user is already enrolled
+    if (currentEnrollments.includes(userId)) {
+      throw new Error('User is already enrolled in this course');
     }
 
+    // Add user to enrollments
+    return prisma.course.update({
+      where: { courseId },
+      data: {
+        enrollments: {
+          push: userId
+        }
+      }
+    });
+  }
+
+  // FIXED: Add missing findEnrolledCoursesByUserId method
+  static async findEnrolledCoursesByUserId(userId: string) {
+    return prisma.course.findMany({
+      where: {
+        enrollments: {
+          has: userId
+        }
+      },
+      include: {
+        sections: {
+          include: {
+            chapters: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  static async delete(courseId: string) {
     // Use transaction to ensure clean deletion
     return await prisma.$transaction(async (tx) => {
-      // Delete related records first
+      // Delete chapters first
+      await tx.chapter.deleteMany({
+        where: {
+          section: {
+            courseId: courseId
+          }
+        }
+      });
+
+      // Delete sections
+      await tx.section.deleteMany({
+        where: { courseId }
+      });
+
+      // Delete related records
       await tx.userCourseProgress.deleteMany({
         where: { courseId }
       });
 
       await tx.transaction.deleteMany({
         where: { courseId }
-      });
-
-      await tx.teacherEarnings.deleteMany({
-        where: { 
-          teacherId: course.teacherId,
-          courseId: courseId 
-        }
       });
 
       // Finally delete the course
@@ -129,86 +180,18 @@ export class CourseModel {
     });
   }
 
-  // New method to check if course can be deleted
-  static async canDelete(courseId: string): Promise<{
-    canDelete: boolean;
-    reason?: string;
-    enrollmentCount?: number;
-    transactionCount?: number;
-  }> {
-    const course = await prisma.course.findUnique({
-      where: { courseId },
-      select: { enrollments: true }
+  static async findByTeacherId(teacherId: string) {
+    return prisma.course.findMany({
+      where: { teacherId },
+      include: {
+        sections: {
+          include: {
+            chapters: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
     });
-
-    if (!course) {
-      return { canDelete: false, reason: 'Course not found' };
-    }
-
-    const enrollmentCount = course.enrollments?.length || 0;
-    const transactionCount = await prisma.transaction.count({
-      where: { courseId }
-    });
-
-    if (enrollmentCount > 0) {
-      return { 
-        canDelete: false, 
-        reason: `Course has ${enrollmentCount} enrolled students`,
-        enrollmentCount,
-        transactionCount
-      };
-    }
-
-    if (transactionCount > 0) {
-      return { 
-        canDelete: false, 
-        reason: `Course has ${transactionCount} transaction records`,
-        enrollmentCount,
-        transactionCount
-      };
-    }
-
-    return { canDelete: true, enrollmentCount: 0, transactionCount: 0 };
-  }
-
-  static async addEnrollment(courseId: string, userId: string) {
-    // Use PostgreSQL array operations for String[]
-    await prisma.$executeRaw`
-      UPDATE "courses" 
-      SET "enrollments" = array_append("enrollments", ${userId})
-      WHERE "courseId" = ${courseId}
-      AND NOT (${userId} = ANY("enrollments"))
-    `;
-    
-    return this.findById(courseId);
-  }
-
-  static async removeEnrollment(courseId: string, userId: string) {
-    // Use PostgreSQL array operations for String[]
-    await prisma.$executeRaw`
-      UPDATE "courses" 
-      SET "enrollments" = array_remove("enrollments", ${userId})
-      WHERE "courseId" = ${courseId}
-    `;
-    
-    return this.findById(courseId);
-  }
-
-  static async findEnrolledCoursesByUserId(userId: string) {
-    // Use PostgreSQL array operations to check if user is in enrollments
-    const courses = await prisma.$queryRaw<any[]>`
-      SELECT * FROM "courses" 
-      WHERE "enrollments" IS NOT NULL 
-      AND ${userId} = ANY("enrollments")
-      ORDER BY "createdAt" DESC
-    `;
-
-    // Ensure enrollments and sections are arrays for returned courses
-    return courses.map(course => ({
-      ...course,
-      enrollments: course.enrollments || [],
-      sections: course.sections || []
-    }));
   }
 }
 

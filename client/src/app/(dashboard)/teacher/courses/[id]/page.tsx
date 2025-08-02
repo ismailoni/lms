@@ -190,7 +190,10 @@ const CourseEditor = () => {
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
       toast.success("Course saved successfully!", { id: "save-course" });
-      refetch();
+      
+      // Refetch will update the course data and trigger the useEffect
+      // that calls dispatch(setSections(course.sections || []))
+      await refetch();
     } catch (error) {
       console.error("Failed to update course:", error);
       toast.error("Failed to save course. Please try again.", { id: "save-course" });

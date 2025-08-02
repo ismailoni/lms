@@ -10,6 +10,7 @@ import {
   PaymentProvider,
   Prisma,
 } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 console.log(
@@ -85,8 +86,8 @@ function safeJson(value: any): any {
   console.log(`    Validating JSON data:`, typeof value);
   
   if (value === null || value === undefined) {
-    console.log(`    -> Returning JsonNull for null/undefined`);
-    return Prisma.JsonNull;
+    console.log(`    -> Returning null for null/undefined`);
+    return null;
   }
   
   if (Array.isArray(value) || typeof value === 'object') {
@@ -100,13 +101,13 @@ function safeJson(value: any): any {
       console.log(`    -> Parsed JSON string successfully`);
       return parsed;
     } catch (error) {
-      console.log(`    -> Failed to parse JSON string, returning JsonNull`);
-      return Prisma.JsonNull;
+      console.log(`    -> Failed to parse JSON string, returning null`);
+      return null;
     }
   }
   
-  console.log(`    -> Unhandled type, returning JsonNull`);
-  return Prisma.JsonNull;
+  console.log(`    -> Unhandled type, returning null`);
+  return null;
 }
 
 async function seedData() {
@@ -121,6 +122,8 @@ async function seedData() {
   console.log("Clearing existing data...");
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE 
+      "chapters",
+      "sections",
       "teacher_earnings", 
       "transactions", 
       "user_course_progress", 
@@ -136,14 +139,14 @@ async function seedData() {
     try {
       console.log(`\nProcessing course ${i + 1}: ${course.title || 'No title'}`);
       
-      // Safely parse sections (for JSON field) and enrollments (for String[] field)
-      const sections = safeJson(course.sections);
+      // Parse sections data but don't include in course creation
+      const sectionsData = safeJson(course.sections);
       const enrollments = safeArray(course.enrollments);
       
-      console.log(`  - Final Sections:`, sections === Prisma.JsonNull ? 'JsonNull' : 'valid JSON');
+      console.log(`  - Sections data:`, sectionsData ? `${sectionsData.length || 0} sections` : 'no sections');
       console.log(`  - Final Enrollments: ${enrollments.length} string items`);
 
-      // Create course data with proper types
+      // FIXED: Create course data WITHOUT sections (they'll be created as relations)
       const courseData: Prisma.CourseCreateInput = {
         courseId: course.courseId,
         teacherId: course.teacherId ?? course.teacher_id,
@@ -156,13 +159,53 @@ async function seedData() {
         price: course.price ?? null,
         level: course.level as CourseLevel,
         status: course.status as CourseStatus,
-        sections: sections,
-        enrollments: enrollments, // This is now String[]
+        enrollments: enrollments, // This is String[]
+        // REMOVED: sections - will be created separately as relations
       };
 
-      await prisma.course.create({
+      // Create the course first
+      const createdCourse = await prisma.course.create({
         data: courseData,
       });
+
+      // Now create sections and chapters as separate entities if they exist
+      if (sectionsData && Array.isArray(sectionsData) && sectionsData.length > 0) {
+        console.log(`  - Creating ${sectionsData.length} sections...`);
+        
+        for (const sectionData of sectionsData) {
+          try {
+            const section = await prisma.section.create({
+              data: {
+                sectionId: sectionData.sectionId || uuidv4(),
+                courseId: createdCourse.courseId,
+                sectionTitle: sectionData.sectionTitle || sectionData.title || 'Untitled Section',
+                sectionDescription: sectionData.sectionDescription || sectionData.description || '',
+              }
+            });
+
+            // Create chapters for this section
+            if (sectionData.chapters && Array.isArray(sectionData.chapters) && sectionData.chapters.length > 0) {
+              console.log(`    - Creating ${sectionData.chapters.length} chapters for section ${section.sectionTitle}...`);
+              
+              for (const chapterData of sectionData.chapters) {
+                await prisma.chapter.create({
+                  data: {
+                    chapterId: chapterData.chapterId || uuidv4(),
+                    sectionId: section.sectionId,
+                    title: chapterData.title || 'Untitled Chapter',
+                    content: chapterData.content || '',
+                    type: chapterData.type || 'Text',
+                    video: chapterData.video || '',
+                  }
+                });
+              }
+            }
+          } catch (sectionError) {
+            console.error(`    ❌ Error creating section:`, sectionError);
+            // Continue with other sections
+          }
+        }
+      }
       
       console.log(`  ✅ Course ${i + 1} inserted successfully`);
     } catch (error) {
@@ -184,8 +227,8 @@ async function seedData() {
           price: course.price ?? null,
           level: (course.level as CourseLevel) || CourseLevel.Beginner,
           status: (course.status as CourseStatus) || CourseStatus.Published,
-          sections: Prisma.JsonNull,
-          enrollments: [], // Empty array instead of JsonNull
+          enrollments: [], // Empty array for String[]
+          // REMOVED: sections - not part of CourseCreateInput when using relations
         };
 
         await prisma.course.create({

@@ -4,6 +4,17 @@ import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
 import CourseModel from "../models/prisma/courseModel";
 import { calculateOverallProgress } from "../utils/utils";
 
+// Add interface for Course type
+interface Course {
+  courseId: string;
+  title: string;
+  teacherName: string;
+  category: string;
+  enrollments: string[];
+  sections: any[];
+  [key: string]: any;
+}
+
 export const getUserEnrolledCourses = async (
   req: Request,
   res: Response
@@ -25,7 +36,7 @@ export const getUserEnrolledCourses = async (
     
     // Get progress data for each enrolled course
     const coursesWithProgress = await Promise.all(
-      enrolledCourses.map(async (course) => {
+      enrolledCourses.map(async (course: Course) => { // FIXED: Added type annotation
         const progress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, course.courseId);
         return {
           ...course,

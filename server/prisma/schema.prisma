@@ -16,11 +16,11 @@ model Course {
   description    String?
   category       String
   image          String?
-  price          Float?
-  level          CourseLevel
-  status         CourseStatus
-  sections       Json?              
-  enrollments    String[]           // Changed to array of Strings
+  price          Float              @default(0)
+  level          String              @default("Beginner")
+  status         String              @default("Draft")
+  sections       Section[]
+  enrollments    String[]           @default([])
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -78,6 +78,33 @@ model UserCourseProgress {
 
   @@unique([userId, courseId])
   @@map("user_course_progress")
+}
+
+model Section {
+  sectionId          String    @id @default(uuid())
+  courseId           String
+  sectionTitle       String
+  sectionDescription String?
+  chapters           Chapter[]
+  course             Course    @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("sections")
+}
+
+model Chapter {
+  chapterId String  @id @default(uuid())
+  sectionId String
+  title     String
+  content   String?
+  type      String  @default("Text")
+  video     String?
+  section   Section @relation(fields: [sectionId], references: [sectionId], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chapters")
 }
 
 enum CourseLevel {
