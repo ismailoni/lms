@@ -20,7 +20,7 @@ model Course {
   level          CourseLevel
   status         CourseStatus
   sections       Json?              
-  enrollments    Json?              // Keep as Json for now to match existing data
+  enrollments    String[]           // Changed to array of Strings
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
