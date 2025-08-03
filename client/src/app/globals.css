@@ -147,11 +147,11 @@ input[type="color"] {
 }
 
 .light .bg-sidebar {
-  @apply bg-white;
+  @apply bg-white-100;
 }
 
 .light .bg-customgreys-primarybg {
-  @apply bg-white;
+  @apply bg-white-100;
 }
 
 .light .bg-customgreys-secondarybg {
@@ -195,7 +195,7 @@ input[type="color"] {
 }
 
 .light .bg-gray-800 {
-  @apply bg-white border border-gray-200;
+  @apply bg-white-100 border border-gray-200;
 }
 
 .light .bg-gray-700\/50 {
@@ -312,7 +312,7 @@ input[type="color"] {
 }
 
 .glass-effect {
-  @apply bg-white-100/5 backdrop-blur-sm border border-white-100/10;
+  @apply bg-white-100/70 backdrop-blur-sm border border-white-100/70;
 }
 
 .gradient-border {
