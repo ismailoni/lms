@@ -275,7 +275,9 @@ export const api = createApi({
             (draft) => {
               Object.assign(draft, {
                 ...draft,
-                sections: progressData.sections,
+                progressData: {
+                  sections: progressData.sections,
+                },
               });
             }
           )
@@ -286,6 +288,58 @@ export const api = createApi({
           patchResult.undo();
         }
       },
+    }),
+
+    // Initialize course progress when user enrolls
+    initializeCourseProgress: build.mutation<
+      {
+        progress: UserCourseProgress;
+        sectionsInitialized: number;
+        chaptersInitialized: number;
+      },
+      { courseId: string }
+    >({
+      query: ({ courseId }) => ({
+        url: `initialize-progress`,
+        method: "POST",
+        body: { courseId },
+      }),
+      invalidatesTags: ["UserCourseProgress"],
+    }),
+
+    // Recalculate overall progress
+    recalculateOverallProgress: build.mutation<
+      {
+        previousProgress: number;
+        newProgress: number;
+        progressData: any;
+      },
+      { userId: string; courseId: string }
+    >({
+      query: ({ userId, courseId }) => ({
+        url: `${userId}/courses/${courseId}/recalculate`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["UserCourseProgress"],
+    }),
+
+    // Update individual chapter progress
+    updateChapterProgress: build.mutation<
+      UserCourseProgress,
+      {
+        userId: string;
+        courseId: string;
+        sectionId: string;
+        chapterId: string;
+        completed: boolean;
+      }
+    >({
+      query: ({ userId, courseId, sectionId, chapterId, completed }) => ({
+        url: `${userId}/courses/${courseId}/sections/${sectionId}/chapters/${chapterId}`,
+        method: "PUT",
+        body: { completed },
+      }),
+      invalidatesTags: ["UserCourseProgress"],
     }),
   }),
 });
@@ -306,4 +360,7 @@ export const {
   useGetUserEnrolledCoursesQuery,
   useGetUserCourseProgressQuery,
   useUpdateUserCourseProgressMutation,
+  useInitializeCourseProgressMutation,
+  useRecalculateOverallProgressMutation,
+  useUpdateChapterProgressMutation,
 } = api;

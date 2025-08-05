@@ -3,7 +3,7 @@ import { useParams } from "next/navigation";
 import {
   useGetCourseQuery,
   useGetUserCourseProgressQuery,
-  useUpdateUserCourseProgressMutation,
+  useUpdateChapterProgressMutation,
 } from "@/state/api";
 import { useUser } from "@clerk/nextjs";
 
@@ -11,7 +11,7 @@ export const useCourseProgressData = () => {
   const { courseId, chapterId } = useParams();
   const { user, isLoaded } = useUser();
   const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
-  const [updateProgress] = useUpdateUserCourseProgressMutation();
+  const [updateChapterProgress] = useUpdateChapterProgressMutation();
 
   const { data: course, isLoading: courseLoading } = useGetCourseQuery(
     (courseId as string) ?? "",
@@ -42,10 +42,10 @@ export const useCourseProgressData = () => {
   );
 
   const isChapterCompleted = () => {
-    if (!currentSection || !currentChapter || !userProgress?.sections)
+    if (!currentSection || !currentChapter || !userProgress?.progressData?.sections)
       return false;
 
-    const section = userProgress.sections.find(
+    const section = userProgress.progressData.sections.find(
       (s) => s.sectionId === currentSection.sectionId
     );
     return (
@@ -55,31 +55,19 @@ export const useCourseProgressData = () => {
     );
   };
 
-  const updateChapterProgress = (
+  const updateChapterProgressHandler = (
     sectionId: string,
     chapterId: string,
     completed: boolean
   ) => {
     if (!user) return;
 
-    const updatedSections = [
-      {
-        sectionId,
-        chapters: [
-          {
-            chapterId,
-            completed,
-          },
-        ],
-      },
-    ];
-
-    updateProgress({
+    updateChapterProgress({
       userId: user.id,
       courseId: (courseId as string) ?? "",
-      progressData: {
-        sections: updatedSections,
-      },
+      sectionId,
+      chapterId,
+      completed,
     });
   };
 
@@ -93,7 +81,7 @@ export const useCourseProgressData = () => {
     currentChapter,
     isLoading,
     isChapterCompleted,
-    updateChapterProgress,
+    updateChapterProgress: updateChapterProgressHandler,
     hasMarkedComplete,
     setHasMarkedComplete,
   };

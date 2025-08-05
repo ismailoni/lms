@@ -4,7 +4,9 @@ import {
   getUserEnrolledCourses, 
   updateUserCourseProgress,
   updateChapterProgress,
-  checkCourseAccess
+  checkCourseAccess,
+  createInitialCourseProgress,
+  recalculateOverallProgress
 } from '../controllers/userCourseProgressController';
 
 const router = express.Router();
@@ -13,9 +15,13 @@ const router = express.Router();
 router.get('/:userId/courses/:courseId/access', checkCourseAccess);
 router.get('/:userId/enrolled-courses', getUserEnrolledCourses);
 
+// Progress initialization route
+router.post('/initialize-progress', createInitialCourseProgress);
+
 // Progress tracking routes
 router.get('/:userId/courses/:courseId', getUserCourseProgress);
 router.put('/:userId/courses/:courseId', updateUserCourseProgress);
 router.put('/:userId/courses/:courseId/sections/:sectionId/chapters/:chapterId', updateChapterProgress);
+router.put('/:userId/courses/:courseId/recalculate', recalculateOverallProgress);
 
 export default router;

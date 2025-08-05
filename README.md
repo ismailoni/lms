@@ -266,12 +266,16 @@ npm run db:reset      # Reset database and reseed
 | ------ | ---------------------------------------- | ---------------------------------------- |
 | GET    | `/teachers/:teacherId/earnings/breakdown` | Get detailed teacher earnings breakdown |
 
-### User Progress
+### User Progress & Learning Analytics
 | Method | Route                                    | Description                              |
 | ------ | ---------------------------------------- | ---------------------------------------- |
-| GET    | `/:userId/enrolled-courses`              | Get user's enrolled courses              |
-| GET    | `/:userId/courses/:courseId`             | Get user's progress for specific course  |
-| PUT    | `/:userId/courses/:courseId`             | Update user's course progress            |
+| GET    | `/:userId/enrolled-courses`              | Get user's enrolled courses with progress |
+| GET    | `/:userId/courses/:courseId`             | Get detailed course progress             |
+| GET    | `/:userId/courses/:courseId/access`      | Check course access and enrollment status |
+| PUT    | `/:userId/courses/:courseId`             | Update overall course progress           |
+| PUT    | `/:userId/courses/:courseId/sections/:sectionId/chapters/:chapterId` | Mark chapter as complete/incomplete |
+| PUT    | `/:userId/courses/:courseId/recalculate` | Recalculate overall progress percentage  |
+| POST   | `/initialize-progress`                   | Create initial progress structure for enrolled course |
 
 ---
 

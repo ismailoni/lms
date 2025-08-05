@@ -48,8 +48,9 @@ declare global {
     status: "Draft" | "Published";
     sections: Section[];
     enrollments: string[]; // Array of user IDs
-    createdAt: string; // Add this line
-    updatedAt?: string; // Optional: also add updatedAt for completeness
+    createdAt: string;
+    updatedAt: string;
+    progress?: UserCourseProgress; // Progress data when viewing as enrolled user
   }
 
   interface Transaction {
@@ -75,8 +76,10 @@ declare global {
     courseId: string;
     enrollmentDate: string;
     overallProgress: number;
-    sections: SectionProgress[];
     lastAccessedTimestamp: string;
+    progressData: {
+      sections: SectionProgress[];
+    };
   }
 
   type CreateUserArgs = Omit<User, "userId">;
@@ -115,6 +118,8 @@ declare global {
   interface ChapterProgress {
     chapterId: string;
     completed: boolean;
+    lastAccessedAt?: string | null;
+    timeSpent?: number;
   }
 
   interface SectionProgress {

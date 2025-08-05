@@ -3,6 +3,8 @@ import { getAuth } from "@clerk/express";
 import TransactionModel from "../models/prisma/transactionModel";
 import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
 import CourseModel from "../models/prisma/courseModel";
+import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
+
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -128,6 +130,9 @@ export const createTransaction = async (req: Request, res: Response): Promise<vo
       console.warn("Failed to add user to enrollments, but transaction succeeded:", enrollmentError);
     }
 
+    // Create initial course progress
+    await createInitialCourseProgress(safeUserId, courseId);
+
     // Update teacher earnings
     await updateTeacherEarnings(courseId, amount);
 
@@ -170,6 +175,63 @@ export const listTransaction = async (req: Request, res: Response): Promise<void
     });
   }
 };
+
+// ---------------------------------
+// Helper: Create Initial Course Progress
+// ---------------------------------
+async function createInitialCourseProgress(userId: string, courseId: string): Promise<void> {
+  try {
+    // Check if progress already exists
+    const existingProgress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);
+    if (existingProgress) {
+      console.log(`Course progress already exists for user ${userId} and course ${courseId}`);
+      return;
+    }
+
+    // Get course with sections and chapters
+    const course = await CourseModel.findById(courseId);
+    if (!course) {
+      console.error(`Course not found: ${courseId}`);
+      return;
+    }
+
+    // Initialize progress data structure based on course sections and chapters
+    const progressData: any = {
+      sections: []
+    };
+
+    // Create progress structure for each section and chapter
+    if (course.sections && course.sections.length > 0) {
+      progressData.sections = course.sections.map((section: any) => ({
+        sectionId: section.sectionId,
+        chapters: section.chapters ? section.chapters.map((chapter: any) => ({
+          chapterId: chapter.chapterId,
+          completed: false,
+          lastAccessedAt: null,
+          timeSpent: 0 // in seconds
+        })) : []
+      }));
+    }
+
+    const currentTimestamp = new Date().toISOString();
+
+    // Create initial course progress record
+    await UserCourseProgressModel.create({
+      userId,
+      courseId,
+      enrollmentDate: currentTimestamp,
+      overallProgress: 0, // Start at 0% progress
+      lastAccessedTimestamp: currentTimestamp,
+      progressData
+    });
+
+    console.log(`Created initial course progress for user ${userId} in course ${courseId}`);
+    console.log(`Initialized ${progressData.sections.length} sections with ${progressData.sections.reduce((total: number, section: any) => total + section.chapters.length, 0)} chapters`);
+  } catch (error) {
+    console.error("Error creating initial course progress:", error);
+    // Don't throw the error - we don't want to fail the transaction if progress creation fails
+  }
+}
 
 // ---------------------------------
 // Helper: Update Teacher Earnings

@@ -328,3 +328,156 @@ export const checkCourseAccess = async (
     });
   }
 };
+
+// ---------------------------------
+// Create Initial Course Progress
+// ---------------------------------
+export const createInitialCourseProgress = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Authentication required" });
+      return;
+    }
+
+    const { courseId } = req.body;
+    if (!courseId) {
+      res.status(400).json({ success: false, message: "courseId is required" });
+      return;
+    }
+
+    // Check if user is enrolled in the course
+    const course = await CourseModel.findById(courseId);
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+
+    const enrollments = course.enrollments || [];
+    if (!enrollments.includes(userId)) {
+      res.status(403).json({ 
+        success: false, 
+        message: "User is not enrolled in this course" 
+      });
+      return;
+    }
+
+    // Check if progress already exists
+    const existingProgress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);
+    if (existingProgress) {
+      res.status(409).json({ 
+        success: false, 
+        message: "Course progress already exists for this user" 
+      });
+      return;
+    }
+
+    // Initialize progress data structure based on course sections and chapters
+    const progressData: any = {
+      sections: []
+    };
+
+    // Create progress structure for each section and chapter
+    if (course.sections && course.sections.length > 0) {
+      progressData.sections = course.sections.map((section: any) => ({
+        sectionId: section.sectionId,
+        chapters: section.chapters ? section.chapters.map((chapter: any) => ({
+          chapterId: chapter.chapterId,
+          completed: false,
+          lastAccessedAt: null,
+          timeSpent: 0 // in seconds
+        })) : []
+      }));
+    }
+
+    const currentTimestamp = new Date().toISOString();
+
+    // Create initial course progress record
+    const newProgress = await UserCourseProgressModel.create({
+      userId,
+      courseId,
+      enrollmentDate: currentTimestamp,
+      overallProgress: 0, // Start at 0% progress
+      lastAccessedTimestamp: currentTimestamp,
+      progressData
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Initial course progress created successfully",
+      data: {
+        progress: newProgress,
+        sectionsInitialized: progressData.sections.length,
+        chaptersInitialized: progressData.sections.reduce((total: number, section: any) => total + section.chapters.length, 0)
+      }
+    });
+
+  } catch (error) {
+    console.error("Error creating initial course progress:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating initial course progress",
+      error: (error as Error).message,
+    });
+  }
+};
+
+// ---------------------------------
+// Recalculate Overall Progress
+// ---------------------------------
+export const recalculateOverallProgress = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Authentication required" });
+      return;
+    }
+
+    const { courseId } = req.params;
+    if (!courseId) {
+      res.status(400).json({ success: false, message: "courseId is required" });
+      return;
+    }
+
+    // Get current progress
+    const progress = await UserCourseProgressModel.findByUserIdAndCourseId(userId, courseId);
+    if (!progress) {
+      res.status(404).json({ success: false, message: "Course progress not found" });
+      return;
+    }
+
+    // Calculate new overall progress
+    const progressData = progress.progressData as any;
+    const newOverallProgress = calculateOverallProgress(progressData?.sections || []);
+
+    // Update the progress
+    await UserCourseProgressModel.update(userId, courseId, {
+      overallProgress: newOverallProgress,
+      lastAccessedTimestamp: new Date().toISOString()
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Overall progress recalculated successfully",
+      data: {
+        previousProgress: progress.overallProgress,
+        newProgress: newOverallProgress,
+        progressData: progressData
+      }
+    });
+
+  } catch (error) {
+    console.error("Error recalculating overall progress:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error recalculating overall progress",
+      error: (error as Error).message,
+    });
+  }
+};

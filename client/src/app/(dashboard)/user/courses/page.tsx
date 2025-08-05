@@ -106,8 +106,7 @@ const Courses = () => {
 
       // Tab filtering
       if (activeTab === "in-progress") {
-        // Mock progress - you'd calculate this from actual progress data
-        const progress = Math.random() * 100;
+        const progress = getCourseProgress(course);
         return (
           matchesSearch &&
           matchesCategory &&
@@ -115,22 +114,37 @@ const Courses = () => {
           progress < 100
         );
       } else if (activeTab === "completed") {
-        // Mock completion - you'd check actual completion status
-        const progress = Math.random() * 100;
+        const progress = getCourseProgress(course);
         return matchesSearch && matchesCategory && progress >= 100;
       }
 
       return matchesSearch && matchesCategory;
     });
 
-    // Calculate stats - enrollments is now String[]
+    // Calculate stats with real progress data
     const totalCourses = courses.length;
-    const inProgressCourses = Math.floor(totalCourses * 0.6); // Mock data
-    const completedCourses = Math.floor(totalCourses * 0.3); // Mock data
+    
+    const progressStats = courses.map(course => ({
+      course,
+      progress: getCourseProgress(course)
+    }));
+    
+    const inProgressCourses = progressStats.filter(
+      ({ progress }) => progress > 0 && progress < 100
+    ).length;
+    
+    const completedCourses = progressStats.filter(
+      ({ progress }) => progress >= 100
+    ).length;
+    
     const totalHours = courses.reduce((acc, course) => {
-      // Mock calculation - you'd calculate from actual course content
+      // Calculate estimated hours based on course content
       const sectionsCount = Array.isArray(course.sections) ? course.sections.length : 0;
-      return acc + (sectionsCount * 2); // Assume 2 hours per section
+      const chaptersCount = course.sections?.reduce(
+        (total, section) => total + (section.chapters?.length || 0), 0
+      ) || 0;
+      // Estimate: 0.5 hours per chapter
+      return acc + (chaptersCount * 0.5);
     }, 0);
 
     return {
@@ -144,11 +158,36 @@ const Courses = () => {
     };
   }, [courses, searchTerm, selectedCategory, sortBy, activeTab]);
 
-  // Mock function to calculate course progress
+  // Calculate actual course progress from progress data
   const getCourseProgress = (course: Course) => {
-    // In a real app, this would calculate based on completed chapters
-    console.log(course);
-    return Math.floor(Math.random() * 100);
+    if (!course.progress) return 0;
+    
+    // If course has progress data with overallProgress, use it
+    if (typeof course.progress.overallProgress === 'number') {
+      return Math.round(course.progress.overallProgress);
+    }
+    
+    // Fallback calculation based on sections
+    if (!course.progress.progressData?.sections || !course.sections) return 0;
+    
+    let totalChapters = 0;
+    let completedChapters = 0;
+    
+    course.sections.forEach(section => {
+      if (section.chapters) {
+        totalChapters += section.chapters.length;
+        const sectionProgress = course.progress?.progressData?.sections?.find(
+          (s: any) => s.sectionId === section.sectionId
+        );
+        if (sectionProgress?.chapters) {
+          completedChapters += sectionProgress.chapters.filter(
+            (c: any) => c.completed
+          ).length;
+        }
+      }
+    });
+    
+    return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
   };
 
   const handleGoToCourse = (course: Course) => {

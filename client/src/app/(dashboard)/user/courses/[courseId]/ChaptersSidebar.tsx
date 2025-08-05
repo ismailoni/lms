@@ -39,7 +39,7 @@ const ChaptersSidebar = () => {
 
   if (isLoading) return <Loading />;
   if (!user) return <div>Please sign in to view course progress.</div>;
-  if (!userProgress) return <div>Error loading course content.</div>;
+  // if (!userProgress) return <div>Error loading course content.</div>;
 
   const toggleSection = (sectionTitle: string) => {
     setExpandedSections((prev) =>
@@ -55,10 +55,10 @@ const ChaptersSidebar = () => {
 
   // Calculate overall course progress
   const totalChapters = course?.sections?.reduce((total, section) => total + section.chapters.length, 0) ?? 0;
-  const completedTotal = userProgress.sections.reduce((total, section) => 
+  const completedTotal = userProgress?.progressData?.sections.reduce((total, section) => 
     total + section.chapters.filter(c => c.completed).length, 0
   );
-  const overallProgress = totalChapters > 0 ? (completedTotal / totalChapters) * 100 : 0;
+  const overallProgress = totalChapters > 0 ? (completedTotal || 1 / totalChapters) * 100 : 0;
 
   return (
     <div ref={sidebarRef} className="chapters-sidebar bg-customgreys-secondarybg border-r border-gray-700/50">
@@ -108,7 +108,7 @@ const ChaptersSidebar = () => {
       {/* Enhanced Sections */}
       <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
         {course?.sections?.map((section, index) => {
-          const sectionProgress = userProgress.sections.find(s => s.sectionId === section.sectionId);
+          const sectionProgress = userProgress?.progressData?.sections.find(s => s.sectionId === section.sectionId);
           const completedChapters = sectionProgress?.chapters.filter(c => c.completed).length ?? 0;
 
           return (
