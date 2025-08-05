@@ -139,7 +139,6 @@ const Courses = () => {
     
     const totalHours = courses.reduce((acc, course) => {
       // Calculate estimated hours based on course content
-      const sectionsCount = Array.isArray(course.sections) ? course.sections.length : 0;
       const chaptersCount = course.sections?.reduce(
         (total, section) => total + (section.chapters?.length || 0), 0
       ) || 0;
@@ -156,7 +155,7 @@ const Courses = () => {
         totalHours,
       },
     };
-  }, [courses, searchTerm, selectedCategory, sortBy, activeTab]);
+  }, [courses, searchTerm, selectedCategory, activeTab]);
 
   // Calculate actual course progress from progress data
   const getCourseProgress = (course: Course) => {
@@ -177,11 +176,11 @@ const Courses = () => {
       if (section.chapters) {
         totalChapters += section.chapters.length;
         const sectionProgress = course.progress?.progressData?.sections?.find(
-          (s: any) => s.sectionId === section.sectionId
+          (s: SectionProgress) => s.sectionId === section.sectionId
         );
         if (sectionProgress?.chapters) {
           completedChapters += sectionProgress.chapters.filter(
-            (c: any) => c.completed
+            (c: ChapterProgress) => c.completed
           ).length;
         }
       }

@@ -312,7 +312,9 @@ export const api = createApi({
       {
         previousProgress: number;
         newProgress: number;
-        progressData: any;
+        progressData: {
+          sections: SectionProgress[];
+        };
       },
       { userId: string; courseId: string }
     >({
