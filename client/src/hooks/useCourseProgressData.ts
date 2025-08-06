@@ -13,14 +13,14 @@ export const useCourseProgressData = () => {
   const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
   const [updateChapterProgress] = useUpdateChapterProgressMutation();
 
-  const { data: course, isLoading: courseLoading } = useGetCourseQuery(
+  const { data: course, isLoading: courseLoading, error: courseError } = useGetCourseQuery(
     (courseId as string) ?? "",
     {
       skip: !courseId,
     }
   );
 
-  const { data: userProgress, isLoading: progressLoading } =
+  const { data: userProgress, isLoading: progressLoading, error: progressError } =
     useGetUserCourseProgressQuery(
       {
         userId: user?.id ?? "",
@@ -30,6 +30,10 @@ export const useCourseProgressData = () => {
         skip: !isLoaded || !user || !courseId,
       }
     );
+
+  // Debug logging
+  console.log("Course data:", { course, courseLoading, courseError });
+  console.log("Progress data:", { userProgress, progressLoading, progressError });
 
   const isLoading = !isLoaded || courseLoading || progressLoading;
 
@@ -80,6 +84,8 @@ export const useCourseProgressData = () => {
     currentSection,
     currentChapter,
     isLoading,
+    courseError,
+    progressError,
     isChapterCompleted,
     updateChapterProgress: updateChapterProgressHandler,
     hasMarkedComplete,

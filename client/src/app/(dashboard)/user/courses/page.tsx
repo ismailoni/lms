@@ -90,6 +90,38 @@ const Courses = () => {
     skip: !isLoaded || !user,
   });
 
+  // Calculate actual course progress from progress data
+  const getCourseProgress = (course: Course) => {
+    if (!course.progress) return 0;
+    
+    // If course has progress data with overallProgress, use it
+    if (typeof course.progress.overallProgress === 'number') {
+      return Math.round(course.progress.overallProgress);
+    }
+    
+    // Fallback calculation based on sections
+    if (!course.progress.progressData?.sections || !course.sections) return 0;
+    
+    let totalChapters = 0;
+    let completedChapters = 0;
+    
+    course.sections.forEach(section => {
+      if (section.chapters) {
+        totalChapters += section.chapters.length;
+        const sectionProgress = course.progress?.progressData?.sections?.find(
+          (s: SectionProgress) => s.sectionId === section.sectionId
+        );
+        if (sectionProgress?.chapters) {
+          completedChapters += sectionProgress.chapters.filter(
+            (c: ChapterProgress) => c.completed
+          ).length;
+        }
+      }
+    });
+    
+    return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+  };
+
   // Enhanced filtering and sorting
   const { filteredCourses, stats } = useMemo(() => {
     if (!courses) return { filteredCourses: [], stats: null };
@@ -155,39 +187,7 @@ const Courses = () => {
         totalHours,
       },
     };
-  }, [courses, searchTerm, selectedCategory, activeTab]);
-
-  // Calculate actual course progress from progress data
-  const getCourseProgress = (course: Course) => {
-    if (!course.progress) return 0;
-    
-    // If course has progress data with overallProgress, use it
-    if (typeof course.progress.overallProgress === 'number') {
-      return Math.round(course.progress.overallProgress);
-    }
-    
-    // Fallback calculation based on sections
-    if (!course.progress.progressData?.sections || !course.sections) return 0;
-    
-    let totalChapters = 0;
-    let completedChapters = 0;
-    
-    course.sections.forEach(section => {
-      if (section.chapters) {
-        totalChapters += section.chapters.length;
-        const sectionProgress = course.progress?.progressData?.sections?.find(
-          (s: SectionProgress) => s.sectionId === section.sectionId
-        );
-        if (sectionProgress?.chapters) {
-          completedChapters += sectionProgress.chapters.filter(
-            (c: ChapterProgress) => c.completed
-          ).length;
-        }
-      }
-    });
-    
-    return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
-  };
+  }, [courses, searchTerm, selectedCategory, activeTab, getCourseProgress]);
 
   const handleGoToCourse = (course: Course) => {
     if (
@@ -236,6 +236,8 @@ const Courses = () => {
                     <Image
                       src={course.image}
                       alt={course.title}
+                      width={80}
+                      height={60}
                       className="w-20 h-15 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
@@ -328,6 +330,8 @@ const Courses = () => {
               <Image
                 src={course.image}
                 alt={course.title}
+                width={400}
+                height={192}
                 className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
               />
             ) : (
