@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -163,7 +163,7 @@ const Course = () => {
   };
 
   // Calculate overall progress
-  const calculateProgress = () => {
+  const calculateProgress = useCallback(() => {
     if (!course?.sections || !userProgress?.progressData?.sections) return 0;
     
     let totalChapters = 0;
@@ -179,11 +179,11 @@ const Course = () => {
     });
     
     return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
-  };
+  }, [course?.sections, userProgress?.progressData?.sections]);
 
   useEffect(() => {
     setCompletionProgress(calculateProgress());
-  }, [userProgress, course]);
+  }, [userProgress, course, calculateProgress]);
 
   console.log("currentChapter.video:", currentChapter);
 
@@ -638,7 +638,7 @@ const Course = () => {
                     <div className="text-center py-4 text-gray-500 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                       <Trophy className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
                       <p className="font-medium">Course Complete!</p>
-                      <p className="text-xs">You've finished all chapters</p>
+                      <p className="text-xs">You&apos;ve finished all chapters</p>
                     </div>
                   )}
                 </div>
@@ -671,7 +671,7 @@ const Course = () => {
                         <span className="font-semibold text-sm">Congratulations!</span>
                       </div>
                       <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                        You've completed this course!
+                        You&apos;ve completed this course!
                       </p>
                     </div>
                   )}

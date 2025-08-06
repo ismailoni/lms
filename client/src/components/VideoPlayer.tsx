@@ -144,6 +144,47 @@ export default function VideoPlayer({ src, onProgress, onComplete, className }: 
     }
   }, [isMuted]);
 
+  // Enhanced control functions
+  const togglePlayPause = useCallback(() => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+    } else {
+      videoRef.current.pause();
+    }
+    resetControlsTimeout();
+  }, [resetControlsTimeout]);
+
+  const skip = useCallback((seconds: number) => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    video.currentTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration));
+    resetControlsTimeout();
+  }, [resetControlsTimeout]);
+
+  const restart = useCallback(() => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = 0;
+    resetControlsTimeout();
+  }, [resetControlsTimeout]);
+
+  const changeVolume = useCallback((delta: number) => {
+    if (!videoRef.current) return;
+    const newVolume = Math.max(0, Math.min(1, volume + delta));
+    videoRef.current.volume = newVolume;
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+    resetControlsTimeout();
+  }, [volume, resetControlsTimeout]);
+
+  const seekToPercent = useCallback((percent: number) => {
+    if (!videoRef.current) return;
+    const time = (percent / 100) * duration;
+    videoRef.current.currentTime = time;
+    setProgress(time);
+    resetControlsTimeout();
+  }, [duration, resetControlsTimeout]);
+
   // Enhanced keyboard controls
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -204,48 +245,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, className }: 
 
     document.addEventListener("keydown", handleKeydown);
     return () => document.removeEventListener("keydown", handleKeydown);
-  }, [toggleMute, showSettings]);
-
-  // Enhanced control functions
-  const togglePlayPause = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-    } else {
-      videoRef.current.pause();
-    }
-    resetControlsTimeout();
-  };
-
-  const skip = (seconds: number) => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
-    video.currentTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration));
-    resetControlsTimeout();
-  };
-
-  const restart = () => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = 0;
-    resetControlsTimeout();
-  };
-
-  const changeVolume = (delta: number) => {
-    if (!videoRef.current) return;
-    const newVolume = Math.max(0, Math.min(1, volume + delta));
-    videoRef.current.volume = newVolume;
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-    resetControlsTimeout();
-  };
-
-  const seekToPercent = (percent: number) => {
-    if (!videoRef.current) return;
-    const time = (percent / 100) * duration;
-    videoRef.current.currentTime = time;
-    setProgress(time);
-    resetControlsTimeout();
-  };
+  }, [toggleMute, showSettings, togglePlayPause, skip, changeVolume, restart, seekToPercent]);
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressRef.current || !videoRef.current) return;
@@ -254,14 +254,6 @@ export default function VideoPlayer({ src, onProgress, onComplete, className }: 
     const time = percent * duration;
     videoRef.current.currentTime = time;
     setProgress(time);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setProgress(time);
-    }
   };
 
   const handleVolume = (e: React.ChangeEvent<HTMLInputElement>) => {

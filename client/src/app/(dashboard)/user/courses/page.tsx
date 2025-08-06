@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useGetUserEnrolledCoursesQuery } from "@/state/api";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -45,6 +45,19 @@ import Image from "next/image";
 
 type ViewMode = "grid" | "list";
 type SortOption = "recent" | "progress" | "alphabetical" | "newest";
+
+// Type definitions for progress data
+type ChapterProgress = {
+  chapterId: string;
+  completed: boolean;
+  lastAccessedAt?: string | null;
+  timeSpent?: number;
+};
+
+type SectionProgress = {
+  sectionId: string;
+  chapters: ChapterProgress[];
+};
 
 const CATEGORY_OPTIONS = [
   { value: "all", label: "All Categories", icon: "📚" },
@@ -91,7 +104,7 @@ const Courses = () => {
   });
 
   // Calculate actual course progress from progress data
-  const getCourseProgress = (course: Course) => {
+  const getCourseProgress = useCallback((course: Course) => {
     if (!course.progress) return 0;
     
     // If course has progress data with overallProgress, use it
@@ -120,7 +133,7 @@ const Courses = () => {
     });
     
     return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
-  };
+  }, []);
 
   // Enhanced filtering and sorting
   const { filteredCourses, stats } = useMemo(() => {
