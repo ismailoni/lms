@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import { CustomFormField } from "@/components/CustomFormField";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 const SharedNotificationSettings = ({
   title = "Notification Settings",
   subtitle = "Manage your notification settings",
