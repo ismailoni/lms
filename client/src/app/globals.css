@@ -1027,12 +1027,18 @@ input[type="color"] {
   @apply min-h-screen w-full bg-customgreys-primarybg flex;
 }
 
-.dashboard__content {
-  @apply flex flex-1 overflow-hidden;
+.dashboard__main {
+  @apply flex-1 min-h-screen transition-all duration-500 ease-in-out overflow-y-auto bg-customgreys-secondarybg;
 }
 
-.dashboard__main {
-  @apply flex-grow min-h-screen transition-all duration-500 ease-in-out overflow-y-auto bg-customgreys-secondarybg;
+.dashboard__main--course {
+  @apply bg-customgreys-primarybg;
+  margin-left: 0 !important;
+}
+
+.dashboard__main--chapter {
+  @apply bg-customgreys-primarybg;
+  margin-left: 0 !important;
 }
 
 .dashboard__main--not-course {
@@ -1046,6 +1052,43 @@ input[type="color"] {
 /* Course Page */
 .course {
   @apply flex h-[100vh];
+}
+
+/* Chapters Sidebar Enhancements */
+.chapters-sidebar {
+  @apply border-r border-gray-700/50 bg-customgreys-secondarybg flex-shrink-0;
+  width: 22rem !important;
+  min-width: 22rem !important;
+  max-width: 22rem !important;
+  height: 100vh !important;
+  position: relative;
+  z-index: 10;
+}
+
+.chapters-sidebar__header {
+  @apply p-6 bg-customgreys-primarybg border-b border-gray-700/50;
+}
+
+.chapters-sidebar__content {
+  @apply bg-customgreys-secondarybg flex-1 overflow-y-auto;
+}
+
+/* Fix sidebar layout in shadcn/ui Sidebar component */
+[data-sidebar="sidebar"] {
+  @apply flex-shrink-0 !important;
+}
+
+/* Chapter navigation enhancements */
+.chapter-nav-item {
+  @apply transition-all duration-200 hover:bg-gray-700/30;
+}
+
+.chapter-nav-item--active {
+  @apply bg-blue-600/20 border-l-4 border-blue-500;
+}
+
+.chapter-nav-item--completed {
+  @apply bg-green-600/10;
 }
 
 .course__container {

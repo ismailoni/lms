@@ -104,7 +104,7 @@ const Courses = () => {
       const progressPromises = courses.map(async (course) => {
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001/"}${user.id}/courses/${course.courseId}`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001"}/${user.id}/courses/${course.courseId}`,
             {
               headers: {
                 'Authorization': `Bearer ${await window.Clerk?.session?.getToken()}`,
@@ -114,10 +114,15 @@ const Courses = () => {
           
           if (response.ok) {
             const progressResult = await response.json();
+            // Handle the API response structure: {success, message, data}
+            const actualProgress = progressResult.data || progressResult;
+            console.log(`Progress for ${course.title}:`, actualProgress);
             return {
               courseId: course.courseId,
-              progress: progressResult.data || progressResult,
+              progress: actualProgress,
             };
+          } else {
+            console.warn(`Failed to fetch progress for course ${course.courseId}: ${response.status}`);
           }
           return {
             courseId: course.courseId,
@@ -159,32 +164,39 @@ const Courses = () => {
     
     if (!courseProgress) return 0;
     
-    // If course has progress data with overallProgress, use it
-    if (typeof courseProgress.overallProgress === 'number') {
+    // First try to calculate based on actual progress data
+    if (courseProgress.progressData?.sections && course.sections) {
+      let totalChapters = 0;
+      let completedChapters = 0;
+      
+      course.sections.forEach(section => {
+        if (section.chapters) {
+          totalChapters += section.chapters.length;
+          const sectionProgress = courseProgress.progressData?.sections?.find(
+            (s: SectionProgress) => s.sectionId === section.sectionId
+          );
+          if (sectionProgress?.chapters) {
+            completedChapters += sectionProgress.chapters.filter(
+              (c: ChapterProgress) => c.completed
+            ).length;
+          }
+        }
+      });
+      
+      const calculatedProgress = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+      
+      // Use calculated progress if it's different from overallProgress or if overallProgress is 0
+      if (calculatedProgress > 0 && (calculatedProgress !== courseProgress.overallProgress || courseProgress.overallProgress === 0)) {
+        return calculatedProgress;
+      }
+    }
+    
+    // Fall back to overallProgress if available and non-zero
+    if (typeof courseProgress.overallProgress === 'number' && courseProgress.overallProgress > 0) {
       return Math.round(courseProgress.overallProgress);
     }
     
-    // Fallback calculation based on sections
-    if (!courseProgress.progressData?.sections || !course.sections) return 0;
-    
-    let totalChapters = 0;
-    let completedChapters = 0;
-    
-    course.sections.forEach(section => {
-      if (section.chapters) {
-        totalChapters += section.chapters.length;
-        const sectionProgress = courseProgress.progressData?.sections?.find(
-          (s: SectionProgress) => s.sectionId === section.sectionId
-        );
-        if (sectionProgress?.chapters) {
-          completedChapters += sectionProgress.chapters.filter(
-            (c: ChapterProgress) => c.completed
-          ).length;
-        }
-      }
-    });
-    
-    return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
+    return 0;
   }, [progressData]);
 
   // Enhanced filtering and sorting
@@ -277,11 +289,18 @@ const Courses = () => {
   const renderCourseCard = (course: Course, index: number) => {
     const progress = getCourseProgress(course);
     const isCompleted = progress === 100;
+    const isInProgress = progress > 0 && progress < 100;
     const chaptersCount =
       course.sections?.reduce(
         (acc, section) => acc + section.chapters.length,
         0
       ) || 0;
+
+    // Get detailed progress info for better UX
+    const courseProgressData = progressData[course.courseId];
+    const completedChaptersCount = courseProgressData?.progressData?.sections?.reduce(
+      (acc, section) => acc + (section.chapters?.filter(ch => ch.completed).length || 0), 0
+    ) || 0;
 
     if (viewMode === "list") {
       return (
@@ -347,7 +366,7 @@ const Courses = () => {
                     />
                     <div className="flex items-center justify-between text-sm text-gray-400">
                       <span>{progress}% completed</span>
-                      <span>{chaptersCount} chapters</span>
+                      <span>{completedChaptersCount}/{chaptersCount} chapters</span>
                     </div>
                   </div>
                 </div>
@@ -630,11 +649,45 @@ const Courses = () => {
 
           {/* Progress Loading Indicator */}
           {progressLoading && (
-            <div className="mt-4 p-3 bg-blue-600/10 border border-blue-500/20 rounded-lg">
-              <div className="flex items-center gap-2 text-blue-400">
-                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">Loading course progress...</span>
+            <div className="mt-4 p-4 bg-blue-600/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-center gap-3 text-blue-400">
+                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                <div>
+                  <span className="text-sm font-medium">Loading course progress...</span>
+                  <p className="text-xs text-blue-300 mt-1">
+                    Fetching progress data for {courses?.length || 0} enrolled courses
+                  </p>
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* Progress Data Debug Info - Remove in production */}
+          {process.env.NODE_ENV === 'development' && Object.keys(progressData).length > 0 && (
+            <div className="mt-4 p-3 bg-gray-800/50 border border-gray-600/30 rounded-lg">
+              <details className="text-xs text-gray-400">
+                <summary className="cursor-pointer text-gray-300 hover:text-white">
+                  Debug: Progress Data ({Object.keys(progressData).length} courses loaded)
+                </summary>
+                <pre className="mt-2 overflow-x-auto text-xs">
+                  {JSON.stringify(
+                    Object.fromEntries(
+                      Object.entries(progressData).map(([courseId, data]) => [
+                        courseId.slice(-8),
+                        {
+                          overallProgress: data.overallProgress,
+                          sectionsCount: data.progressData?.sections?.length || 0,
+                          completedChapters: data.progressData?.sections?.reduce(
+                            (acc, section) => acc + (section.chapters?.filter(ch => ch.completed).length || 0), 0
+                          ) || 0
+                        }
+                      ])
+                    ),
+                    null,
+                    2
+                  )}
+                </pre>
+              </details>
             </div>
           )}
         </div>

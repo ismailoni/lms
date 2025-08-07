@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -43,6 +44,7 @@ type ChapterProgress = {
 };
 
 const Course = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("Notes");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [completionProgress, setCompletionProgress] = useState(0);
@@ -60,7 +62,11 @@ const Course = () => {
     updateChapterProgress,
   } = useCourseProgressData();
 
-  // Enhanced navigation functions
+  // Enhanced navigation functions with router
+  const navigateToChapter = (chapterId: string) => {
+    router.push(`/user/courses/${course?.courseId}/chapters/${chapterId}`);
+  };
+
   const getCurrentChapterIndex = () => {
     if (!course?.sections || !currentChapter) return { sectionIndex: -1, chapterIndex: -1 };
     
@@ -243,138 +249,169 @@ const Course = () => {
   console.log("User progress:", userProgress);
 
   return (
-    <div className="course min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="course min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-800">
       <div className="course__container max-w-7xl mx-auto px-4 py-6">
         {/* Enhanced Breadcrumb with Progress */}
-        <div className="course__breadcrumb mb-8 bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="course__path text-sm text-gray-400 font-medium">
-              <span className="hover:text-blue-400 cursor-pointer transition-colors">
-                {course.title}
-              </span>
-              <span className="mx-2">/</span>
-              <span className="hover:text-blue-400 cursor-pointer transition-colors">
-                {currentSection?.sectionTitle}
-              </span>
-              <span className="mx-2">/</span>
-              <span className="course__current-chapter text-blue-400 font-semibold">
-                {currentChapter?.title}
-              </span>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBookmark}
-                className={`transition-all ${isBookmarked ? 'text-yellow-600 border-yellow-300' : ''}`}
-              >
-                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-              </Button>
-              
-              <Button variant="outline" size="sm" onClick={handleShare}>
-                <Share2 className="w-4 h-4" />
-              </Button>
-              
-              <Button
-                onClick={handleMarkComplete}
-                className={`transition-all ${
-                  isChapterCompleted() 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                {isChapterCompleted() ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Completed
-                  </>
-                ) : (
-                  <>
-                    <Circle className="w-4 h-4 mr-2" />
-                    Mark Complete
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <h1 className="course__title text-3xl font-bold text-gray-900 dark:text-white">
-              {currentChapter?.title}
-            </h1>
-            
-            {/* Course Progress */}
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Course Progress
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <Progress value={completionProgress} className="w-24 h-2" />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {completionProgress}%
+        <div className="course__breadcrumb mb-8 bg-gradient-to-r from-gray-800/90 to-gray-700/90 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-gray-600/30 relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+          <div className="absolute -top-4 -right-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="course__path text-sm text-gray-300 font-medium flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-1.5 rounded-full">
+                  <BookOpen className="w-4 h-4 text-blue-400" />
+                  <span className="hover:text-blue-400 cursor-pointer transition-colors">
+                    {course.title}
                   </span>
-                  {completionProgress === 100 && (
-                    <Trophy className="w-5 h-5 text-yellow-500" />
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+                <span className="hover:text-blue-400 cursor-pointer transition-colors bg-gray-700/30 px-3 py-1.5 rounded-full">
+                  {currentSection?.sectionTitle}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+                <span className="course__current-chapter text-blue-400 font-semibold bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30">
+                  {currentChapter?.title}
+                </span>
+              </div>
+              
+              {/* Enhanced Action Buttons */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBookmark}
+                  className={`transition-all duration-300 hover:scale-105 ${
+                    isBookmarked 
+                      ? 'text-yellow-400 border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/25' 
+                      : 'border-gray-600 hover:border-yellow-400 hover:text-yellow-400'
+                  }`}
+                >
+                  <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleShare}
+                  className="border-gray-600 hover:border-blue-400 hover:text-blue-400 transition-all duration-300 hover:scale-105"
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+                
+                <Button
+                  onClick={handleMarkComplete}
+                  className={`transition-all duration-300 hover:scale-105 shadow-lg ${
+                    isChapterCompleted() 
+                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-500/25' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
+                  }`}
+                >
+                  {isChapterCompleted() ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Completed
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="w-4 h-4 mr-2" />
+                      Mark Complete
+                    </>
                   )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Instructor Info */}
-          <div className="course__header mt-6 flex items-center justify-between">
-            <div className="course__instructor flex items-center gap-3">
-              <Avatar className="course__avatar h-12 w-12 border-2 border-blue-200 dark:border-blue-700">
-                <AvatarImage alt={course.teacherName} />
-                <AvatarFallback className="course__avatar-fallback bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 font-semibold">
-                  {course.teacherName[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="course__instructor-name font-semibold text-gray-900 dark:text-white">
-                    {course.teacherName}
-                  </span>
-                  <Badge variant="secondary" className="text-xs">
-                    Instructor
-                  </Badge>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Senior UX Designer</p>
+                </Button>
               </div>
             </div>
 
-            {/* Chapter Meta */}
-            <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-1">
-                {currentChapter?.type === "Text" ? (
-                  <FileText className="w-4 h-4" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-                <span>{currentChapter?.type === "Text" ? "Reading" : "Video"}</span>
-              </div>
+            <div className="flex items-center justify-between">
+              <h1 className="course__title text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                {currentChapter?.title}
+              </h1>
               
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>5 min</span>
+              {/* Enhanced Course Progress */}
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-400 mb-1">
+                    Course Progress
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Progress 
+                        value={completionProgress} 
+                        className="w-32 h-3 bg-gray-700 border border-gray-600" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full"></div>
+                    </div>
+                    <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      {completionProgress}%
+                    </span>
+                    {completionProgress === 100 && (
+                      <Trophy className="w-6 h-6 text-yellow-500 animate-bounce" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Instructor Info */}
+            <div className="course__header mt-8 flex items-center justify-between bg-gray-800/50 rounded-2xl p-6 border border-gray-600/30">
+              <div className="course__instructor flex items-center gap-4">
+                <div className="relative">
+                  <Avatar className="course__avatar h-14 w-14 border-3 border-blue-400 shadow-lg shadow-blue-400/25">
+                    <AvatarImage alt={course.teacherName} />
+                    <AvatarFallback className="course__avatar-fallback bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
+                      {course.teacherName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-800 animate-pulse"></div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="course__instructor-name font-bold text-xl text-white">
+                      {course.teacherName}
+                    </span>
+                    <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 shadow-lg">
+                      <User className="w-3 h-3 mr-1" />
+                      Instructor
+                    </Badge>
+                  </div>
+                  <p className="text-gray-400 font-medium">Senior UX Designer</p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                <BookOpen className="w-4 h-4" />
-                <span>Chapter {getCurrentChapterIndex().chapterIndex + 1}</span>
+              {/* Enhanced Chapter Meta */}
+              <div className="flex items-center gap-8 text-sm text-gray-300">
+                <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded-lg">
+                  {currentChapter?.type === "Text" ? (
+                    <FileText className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Play className="w-4 h-4 text-blue-400" />
+                  )}
+                  <span className="font-medium">{currentChapter?.type === "Text" ? "Reading" : "Video"}</span>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded-lg">
+                  <Clock className="w-4 h-4 text-orange-400" />
+                  <span className="font-medium">5 min</span>
+                </div>
+
+                <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded-lg">
+                  <BookOpen className="w-4 h-4 text-purple-400" />
+                  <span className="font-medium">Chapter {getCurrentChapterIndex().chapterIndex + 1}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Enhanced Video Section */}
-        <Card className="course__video mb-8 overflow-hidden bg-white dark:bg-gray-800 border-0 shadow-lg">
-          <CardContent className="course__video-container p-0 relative">
+        <Card className="course__video mb-8 overflow-hidden bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-lg border-0 shadow-2xl relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+          <CardContent className="course__video-container p-0 relative z-10">
             {currentChapter?.video ? (
               <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg"></div>
                 <VideoPlayer
                   src={currentChapter.video as string}
                   onProgress={(progress) => {
@@ -389,14 +426,21 @@ const Course = () => {
                       handleMarkComplete();
                     }
                   }}
-                  className="rounded-lg overflow-hidden"
+                  className="rounded-lg overflow-hidden shadow-2xl"
                 />
+                {/* Video Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20 rounded-lg pointer-events-none"></div>
               </div>
             ) : (
-              <div className="course__no-video h-64 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-500">
-                <Play className="w-16 h-16 mb-4 text-gray-400" />
-                <p className="text-lg font-medium">No video available for this chapter.</p>
-                <p className="text-sm text-gray-400 mt-1">Check the notes section for content.</p>
+              <div className="course__no-video h-80 flex flex-col items-center justify-center bg-gradient-to-br from-gray-700/50 to-gray-600/50 text-gray-300 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+                <div className="relative z-10 text-center">
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                    <Play className="w-12 h-12 text-blue-400" />
+                  </div>
+                  <p className="text-xl font-semibold mb-2">No video available for this chapter.</p>
+                  <p className="text-gray-400">Check the notes section for content.</p>
+                </div>
               </div>
             )}
           </CardContent>
@@ -406,55 +450,59 @@ const Course = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Enhanced Tabs Section */}
           <div className="lg:col-span-2">
-            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-              <CardContent className="p-0">
+            <Card className="bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-lg border border-gray-600/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+              <CardContent className="p-0 relative z-10">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="course__tabs">
-                  <div className="border-b border-gray-200 dark:border-gray-700 px-6">
-                    <TabsList className="course__tabs-list h-14 bg-transparent p-0 space-x-8">
+                  <div className="border-b border-gray-600/50 bg-gray-800/50 backdrop-blur-sm">
+                    <TabsList className="course__tabs-list h-16 bg-transparent p-0 px-6 gap-8 w-full justify-start">
                       <TabsTrigger 
-                        className="course__tab relative px-0 py-4 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 font-semibold" 
+                        className="course__tab relative px-4 py-4 bg-transparent border-b-3 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-400 font-semibold transition-all duration-300 hover:text-blue-400 data-[state=active]:bg-blue-500/10 rounded-t-lg" 
                         value="Notes"
                       >
-                        <FileText className="w-4 h-4 mr-2" />
+                        <FileText className="w-5 h-5 mr-2" />
                         Notes
                       </TabsTrigger>
                       <TabsTrigger 
-                        className="course__tab relative px-0 py-4 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 font-semibold" 
+                        className="course__tab relative px-4 py-4 bg-transparent border-b-3 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-400 font-semibold transition-all duration-300 hover:text-green-400 data-[state=active]:bg-green-500/10 rounded-t-lg" 
                         value="Resources"
                       >
-                        <Download className="w-4 h-4 mr-2" />
+                        <Download className="w-5 h-5 mr-2" />
                         Resources
                       </TabsTrigger>
                       <TabsTrigger 
-                        className="course__tab relative px-0 py-4 bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 font-semibold" 
+                        className="course__tab relative px-4 py-4 bg-transparent border-b-3 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 font-semibold transition-all duration-300 hover:text-purple-400 data-[state=active]:bg-purple-500/10 rounded-t-lg" 
                         value="Quiz"
                       >
-                        <Lightbulb className="w-4 h-4 mr-2" />
+                        <Lightbulb className="w-5 h-5 mr-2" />
                         Quiz
                       </TabsTrigger>
                     </TabsList>
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-8">
                     <TabsContent className="course__tab-content mt-0" value="Notes">
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                             Chapter Notes
                           </h3>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1">
+                            <FileText className="w-3 h-3 mr-1" />
                             Study Material
                           </Badge>
                         </div>
                         <div className="prose prose-gray dark:prose-invert max-w-none">
                           {currentChapter?.content ? (
-                            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                            <div className="text-gray-300 leading-relaxed bg-gray-800/30 rounded-xl p-6 border border-gray-600/30">
                               {currentChapter.content}
                             </div>
                           ) : (
-                            <div className="text-center py-12 text-gray-500">
-                              <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                              <p>No notes available for this chapter.</p>
+                            <div className="text-center py-16 text-gray-400">
+                              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                                <FileText className="w-10 h-10 text-blue-400" />
+                              </div>
+                              <p className="text-lg font-medium">No notes available for this chapter.</p>
                             </div>
                           )}
                         </div>
@@ -462,43 +510,50 @@ const Course = () => {
                     </TabsContent>
 
                     <TabsContent className="course__tab-content mt-0" value="Resources">
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
                             Learning Resources
                           </h3>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1">
+                            <Download className="w-3 h-3 mr-1" />
                             Downloadable
                           </Badge>
                         </div>
-                        <div className="space-y-3">
-                          {/* Sample Resources */}
-                          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <div className="space-y-4">
+                          {/* Enhanced Sample Resources */}
+                          <div className="border border-gray-600/50 rounded-xl p-6 hover:bg-gray-700/20 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 group">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <FileText className="w-5 h-5 text-blue-600" />
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                  <FileText className="w-6 h-6 text-blue-400" />
+                                </div>
                                 <div>
-                                  <p className="font-medium text-gray-900 dark:text-white">Chapter Slides</p>
-                                  <p className="text-sm text-gray-500">PDF • 2.4 MB</p>
+                                  <p className="font-semibold text-white text-lg">Chapter Slides</p>
+                                  <p className="text-sm text-gray-400">PDF • 2.4 MB • High Quality</p>
                                 </div>
                               </div>
-                              <Button size="sm" variant="outline">
-                                <Download className="w-4 h-4" />
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
                               </Button>
                             </div>
                           </div>
                           
-                          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                          <div className="border border-gray-600/50 rounded-xl p-6 hover:bg-gray-700/20 transition-all duration-300 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10 group">
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <FileText className="w-5 h-5 text-green-600" />
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                  <FileText className="w-6 h-6 text-green-400" />
+                                </div>
                                 <div>
-                                  <p className="font-medium text-gray-900 dark:text-white">Exercise Files</p>
-                                  <p className="text-sm text-gray-500">ZIP • 5.1 MB</p>
+                                  <p className="font-semibold text-white text-lg">Exercise Files</p>
+                                  <p className="text-sm text-gray-400">ZIP • 5.1 MB • Practice Materials</p>
                                 </div>
                               </div>
-                              <Button size="sm" variant="outline">
-                                <Download className="w-4 h-4" />
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/25 transition-all duration-300">
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
                               </Button>
                             </div>
                           </div>
@@ -507,19 +562,22 @@ const Course = () => {
                     </TabsContent>
 
                     <TabsContent className="course__tab-content mt-0" value="Quiz">
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                             Knowledge Check
                           </h3>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1">
+                            <Lightbulb className="w-3 h-3 mr-1" />
                             Optional
                           </Badge>
                         </div>
-                        <div className="text-center py-12 text-gray-500">
-                          <Lightbulb className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                          <p>Quiz content coming soon!</p>
-                          <p className="text-sm text-gray-400 mt-1">Test your knowledge with interactive questions.</p>
+                        <div className="text-center py-16 text-gray-400">
+                          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center">
+                            <Lightbulb className="w-10 h-10 text-purple-400" />
+                          </div>
+                          <p className="text-lg font-medium mb-2">Quiz content coming soon!</p>
+                          <p className="text-gray-500">Test your knowledge with interactive questions.</p>
                         </div>
                       </div>
                     </TabsContent>
@@ -532,51 +590,55 @@ const Course = () => {
           {/* Enhanced Sidebar */}
           <div className="space-y-6">
             {/* Enhanced Instructor Card */}
-            <Card className="course__instructor-card bg-white dark:bg-gray-800 border-0 shadow-lg">
-              <CardContent className="course__instructor-info p-6">
-                <div className="course__instructor-header flex items-start gap-4 mb-4">
-                  <Avatar className="course__instructor-avatar h-16 w-16 border-2 border-blue-200 dark:border-blue-700">
-                    <AvatarImage alt={course.teacherName} />
-                    <AvatarFallback className="course__instructor-avatar-fallback bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xl font-bold">
-                      {course.teacherName[0]}
-                    </AvatarFallback>
-                  </Avatar>
+            <Card className="course__instructor-card bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-lg border border-gray-600/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+              <CardContent className="course__instructor-info p-8 relative z-10">
+                <div className="course__instructor-header flex items-start gap-4 mb-6">
+                  <div className="relative">
+                    <Avatar className="course__instructor-avatar h-20 w-20 border-3 border-blue-400 shadow-xl shadow-blue-400/25">
+                      <AvatarImage alt={course.teacherName} />
+                      <AvatarFallback className="course__instructor-avatar-fallback bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl font-bold">
+                        {course.teacherName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-gray-800 animate-pulse"></div>
+                  </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="course__instructor-name text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="course__instructor-name text-xl font-bold text-white">
                         {course.teacherName}
                       </h4>
-                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 shadow-lg">
                         <User className="w-3 h-3 mr-1" />
                         Instructor
                       </Badge>
                     </div>
-                    <p className="course__instructor-title text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    <p className="course__instructor-title text-gray-300 font-semibold mb-3">
                       Senior UX Designer
                     </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-current text-yellow-500" />
-                        <span>4.9 rating</span>
+                    <div className="flex items-center gap-6 text-sm text-gray-400">
+                      <div className="flex items-center gap-1 bg-yellow-500/20 px-2 py-1 rounded-lg">
+                        <Star className="w-4 h-4 fill-current text-yellow-500" />
+                        <span className="font-medium">4.9 rating</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" />
-                        <span>15+ courses</span>
+                      <div className="flex items-center gap-1 bg-blue-500/20 px-2 py-1 rounded-lg">
+                        <BookOpen className="w-4 h-4 text-blue-400" />
+                        <span className="font-medium">15+ courses</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="course__instructor-bio">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-gray-300 leading-relaxed bg-gray-800/50 rounded-lg p-4 border border-gray-600/30">
                     A seasoned Senior UX Designer with over 15 years of experience
                     in creating intuitive and engaging digital experiences.
                     Expertise in leading UX design projects.
                   </p>
                 </div>
                 
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button variant="outline" className="w-full">
+                <div className="mt-6 pt-6 border-t border-gray-600/50">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                     <User className="w-4 h-4 mr-2" />
                     View Profile
                   </Button>
@@ -584,30 +646,33 @@ const Course = () => {
               </CardContent>
             </Card>
 
-            {/* Chapter Navigation */}
-            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-              <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
+            {/* Enhanced Chapter Navigation */}
+            <Card className="bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-lg border border-gray-600/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+              <CardContent className="p-8 relative z-10">
+                <h4 className="font-bold text-xl text-white mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-blue-400" />
+                  </div>
                   Chapter Navigation
                 </h4>
                 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {getPreviousChapter() && (
                     <Button 
                       variant="outline" 
-                      className="w-full justify-start"
+                      className="w-full justify-start p-4 h-auto border-gray-600/50 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300 group"
                       onClick={() => {
                         const prev = getPreviousChapter();
                         if (prev?.chapter) {
-                          window.location.href = `/user/courses/${course.courseId}/chapters/${prev.chapter.chapterId}`;
+                          navigateToChapter(prev.chapter.chapterId);
                         }
                       }}
                     >
-                      <ChevronLeft className="w-4 h-4 mr-2" />
+                      <ChevronLeft className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform duration-300" />
                       <div className="text-left">
-                        <div className="font-medium">Previous</div>
-                        <div className="text-xs text-gray-500 truncate">
+                        <div className="font-semibold text-white">Previous</div>
+                        <div className="text-sm text-gray-400 truncate">
                           {getPreviousChapter()?.chapter?.title || 'Previous Chapter'}
                         </div>
                       </div>
@@ -616,70 +681,76 @@ const Course = () => {
                   
                   {getNextChapter() && (
                     <Button 
-                      className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+                      className="w-full justify-start p-4 h-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
                       onClick={() => {
                         const next = getNextChapter();
                         if (next?.chapter) {
-                          window.location.href = `/user/courses/${course.courseId}/chapters/${next.chapter.chapterId}`;
+                          navigateToChapter(next.chapter.chapterId);
                         }
                       }}
                     >
                       <div className="text-left flex-1">
-                        <div className="font-medium">Next Chapter</div>
-                        <div className="text-xs text-blue-100 truncate">
+                        <div className="font-semibold">Next Chapter</div>
+                        <div className="text-sm text-blue-100 truncate">
                           {getNextChapter()?.chapter?.title || 'Next Chapter'}
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 ml-2" />
+                      <ChevronRight className="w-5 h-5 ml-3 group-hover:scale-110 transition-transform duration-300" />
                     </Button>
                   )}
                   
                   {!getNextChapter() && (
-                    <div className="text-center py-4 text-gray-500 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                      <Trophy className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-                      <p className="font-medium">Course Complete!</p>
-                      <p className="text-xs">You&apos;ve finished all chapters</p>
+                    <div className="text-center py-6 text-gray-400 border-2 border-dashed border-gray-600/50 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10">
+                      <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500 animate-bounce" />
+                      <p className="font-bold text-lg text-yellow-400">Course Complete!</p>
+                      <p className="text-sm text-gray-300">You've finished all chapters</p>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Study Progress */}
-            <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-              <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Trophy className="w-4 h-4" />
+            {/* Enhanced Study Progress */}
+            <Card className="bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-lg border border-gray-600/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
+              <CardContent className="p-8 relative z-10">
+                <h4 className="font-bold text-xl text-white mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-lg flex items-center justify-center">
+                    <Trophy className="w-4 h-4 text-purple-400" />
+                  </div>
                   Your Progress
                 </h4>
                 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600 dark:text-gray-400">Course Completion</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex justify-between text-sm mb-3">
+                      <span className="text-gray-300 font-medium">Course Completion</span>
+                      <span className="font-bold text-lg bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                         {completionProgress}%
                       </span>
                     </div>
-                    <Progress value={completionProgress} className="h-3" />
+                    <div className="relative">
+                      <Progress value={completionProgress} className="h-4 bg-gray-700 border border-gray-600" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full"></div>
+                    </div>
                   </div>
                   
                   {completionProgress === 100 && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-                        <Trophy className="w-5 h-5" />
-                        <span className="font-semibold text-sm">Congratulations!</span>
+                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-4">
+                      <div className="flex items-center gap-3 text-green-300 mb-2">
+                        <Trophy className="w-6 h-6 text-green-400" />
+                        <span className="font-bold text-lg">Congratulations!</span>
                       </div>
-                      <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                        You&apos;ve completed this course!
+                      <p className="text-sm text-green-200">
+                        You've completed this course!
                       </p>
                     </div>
                   )}
                   
                   <Button 
                     variant="outline" 
-                    className="w-full"
-                    onClick={() => window.location.href = `/user/courses/${course.courseId}`}
+                    className="w-full border-gray-600/50 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300 hover:scale-105"
+                    onClick={() => router.push(`/user/courses/${course.courseId}`)}
                   >
                     <BookOpen className="w-4 h-4 mr-2" />
                     View Course Overview
