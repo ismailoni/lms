@@ -1,6 +1,5 @@
 'use client';
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import { SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { Search, Menu, X } from "lucide-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
@@ -12,7 +11,6 @@ const NonDashboardNavbar = () => {
   const userRole = user?.publicMetadata?.userType as "student" | "teacher";
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [notificationCount] = useState(100000); // Mock notification count
 
   // Close mobile menu when clicking outside or on escape
   useEffect(() => {

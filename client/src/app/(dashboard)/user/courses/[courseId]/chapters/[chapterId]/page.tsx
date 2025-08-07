@@ -703,7 +703,7 @@ const Course = () => {
                     <div className="text-center py-6 text-gray-400 border-2 border-dashed border-gray-600/50 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10">
                       <Trophy className="w-12 h-12 mx-auto mb-3 text-yellow-500 animate-bounce" />
                       <p className="font-bold text-lg text-yellow-400">Course Complete!</p>
-                      <p className="text-sm text-gray-300">You've finished all chapters</p>
+                      <p className="text-sm text-gray-300">You&apos;ve finished all chapters</p>
                     </div>
                   )}
                 </div>
@@ -742,7 +742,7 @@ const Course = () => {
                         <span className="font-bold text-lg">Congratulations!</span>
                       </div>
                       <p className="text-sm text-green-200">
-                        You've completed this course!
+                        You&apos;ve completed this course!
                       </p>
                     </div>
                   )}

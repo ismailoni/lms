@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useGetUserEnrolledCoursesQuery, useGetUserCourseProgressQuery } from "@/state/api";
+import { useGetUserEnrolledCoursesQuery } from "@/state/api";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
@@ -289,7 +289,6 @@ const Courses = () => {
   const renderCourseCard = (course: Course, index: number) => {
     const progress = getCourseProgress(course);
     const isCompleted = progress === 100;
-    const isInProgress = progress > 0 && progress < 100;
     const chaptersCount =
       course.sections?.reduce(
         (acc, section) => acc + section.chapters.length,

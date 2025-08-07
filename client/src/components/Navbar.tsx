@@ -3,7 +3,6 @@ import { useUser } from "@clerk/nextjs";
 import { Search, Zap } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
