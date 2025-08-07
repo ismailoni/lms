@@ -69,7 +69,7 @@ const TeacherCourseCard = ({
                   className="rounded-lg object-cover max-w-[80px] max-h-[60px]"
                 />
               ) : (
-                <div className="w-20 h-15 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                <div className="w-20 h-15 bg-gray-bg-gray-700 rounded-lg flex items-center justify-center">
                   <BookOpen className="w-6 h-6 text-gray-400" />
                 </div>
               )}
@@ -79,7 +79,7 @@ const TeacherCourseCard = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 truncate">
+                  <h3 className="font-semibold text-lg text-gray-text-gray-100 truncate">
                     {course.title}
                   </h3>
                   <p className="text-sm text-gray-500 mb-2">
@@ -108,8 +108,8 @@ const TeacherCourseCard = ({
                   className={cn(
                     "ml-2",
                     course.status === "Published"
-                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                      ? "bg-green-100 text-green-bg-green-text-green-200"
+                      : "bg-yellow-100 text-yellow-bg-yellow-text-yellow-200"
                   )}
                 >
                   {course.status}
@@ -196,7 +196,7 @@ const TeacherCourseCard = ({
             </Badge>
           </div>
         ) : (
-          <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-t-lg flex items-center justify-center relative">
+          <div className="w-full h-48 bg-gray-bg-gray-700 rounded-t-lg flex items-center justify-center relative">
             <BookOpen className="w-12 h-12 text-gray-400" />
             <Badge
               variant={
@@ -205,8 +205,8 @@ const TeacherCourseCard = ({
               className={cn(
                 "absolute top-3 right-3",
                 course.status === "Published"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                  ? "bg-green-100 text-green-bg-green-text-green-200"
+                  : "bg-yellow-100 text-yellow-bg-yellow-text-yellow-200"
               )}
             >
               {course.status}

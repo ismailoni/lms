@@ -243,21 +243,21 @@ const Course = () => {
   console.log("User progress:", userProgress);
 
   return (
-    <div className="course min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="course min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <div className="course__container max-w-7xl mx-auto px-4 py-6">
         {/* Enhanced Breadcrumb with Progress */}
-        <div className="course__breadcrumb mb-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="course__breadcrumb mb-8 bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <div className="course__path text-sm text-gray-600 dark:text-gray-400 font-medium">
-              <span className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
+            <div className="course__path text-sm text-gray-400 font-medium">
+              <span className="hover:text-blue-400 cursor-pointer transition-colors">
                 {course.title}
               </span>
               <span className="mx-2">/</span>
-              <span className="hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
+              <span className="hover:text-blue-400 cursor-pointer transition-colors">
                 {currentSection?.sectionTitle}
               </span>
               <span className="mx-2">/</span>
-              <span className="course__current-chapter text-blue-600 dark:text-blue-400 font-semibold">
+              <span className="course__current-chapter text-blue-400 font-semibold">
                 {currentChapter?.title}
               </span>
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
-import { useGetUserEnrolledCoursesQuery } from "@/state/api";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useGetUserEnrolledCoursesQuery, useGetUserCourseProgressQuery } from "@/state/api";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
@@ -46,19 +46,6 @@ import Image from "next/image";
 type ViewMode = "grid" | "list";
 type SortOption = "recent" | "progress" | "alphabetical" | "newest";
 
-// Type definitions for progress data
-type ChapterProgress = {
-  chapterId: string;
-  completed: boolean;
-  lastAccessedAt?: string | null;
-  timeSpent?: number;
-};
-
-type SectionProgress = {
-  sectionId: string;
-  chapters: ChapterProgress[];
-};
-
 const CATEGORY_OPTIONS = [
   { value: "all", label: "All Categories", icon: "📚" },
   { value: "web-development", label: "Web Development", icon: "💻" },
@@ -94,6 +81,8 @@ const Courses = () => {
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTab, setActiveTab] = useState("all");
+  const [progressData, setProgressData] = useState<Record<string, UserCourseProgress>>({});
+  const [progressLoading, setProgressLoading] = useState(false);
 
   const {
     data: courses,
@@ -103,17 +92,80 @@ const Courses = () => {
     skip: !isLoaded || !user,
   });
 
+  // Fetch progress data for all enrolled courses
+  useEffect(() => {
+    const fetchProgressData = async () => {
+      if (!courses || !user?.id || courses.length === 0) {
+        setProgressData({});
+        return;
+      }
+
+      setProgressLoading(true);
+      const progressPromises = courses.map(async (course) => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001/"}${user.id}/courses/${course.courseId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${await window.Clerk?.session?.getToken()}`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            const progressResult = await response.json();
+            return {
+              courseId: course.courseId,
+              progress: progressResult.data || progressResult,
+            };
+          }
+          return {
+            courseId: course.courseId,
+            progress: null,
+          };
+        } catch (error) {
+          console.error(`Failed to fetch progress for course ${course.courseId}:`, error);
+          return {
+            courseId: course.courseId,
+            progress: null,
+          };
+        }
+      });
+
+      try {
+        const results = await Promise.all(progressPromises);
+        const newProgressData: Record<string, UserCourseProgress> = {};
+        
+        results.forEach(({ courseId, progress }) => {
+          if (progress) {
+            newProgressData[courseId] = progress;
+          }
+        });
+        
+        setProgressData(newProgressData);
+      } catch (error) {
+        console.error('Failed to fetch progress data:', error);
+      } finally {
+        setProgressLoading(false);
+      }
+    };
+
+    fetchProgressData();
+  }, [courses, user?.id]);
+
   // Calculate actual course progress from progress data
   const getCourseProgress = useCallback((course: Course) => {
-    if (!course.progress) return 0;
+    const courseProgress = progressData[course.courseId];
+    
+    if (!courseProgress) return 0;
     
     // If course has progress data with overallProgress, use it
-    if (typeof course.progress.overallProgress === 'number') {
-      return Math.round(course.progress.overallProgress);
+    if (typeof courseProgress.overallProgress === 'number') {
+      return Math.round(courseProgress.overallProgress);
     }
     
     // Fallback calculation based on sections
-    if (!course.progress.progressData?.sections || !course.sections) return 0;
+    if (!courseProgress.progressData?.sections || !course.sections) return 0;
     
     let totalChapters = 0;
     let completedChapters = 0;
@@ -121,7 +173,7 @@ const Courses = () => {
     course.sections.forEach(section => {
       if (section.chapters) {
         totalChapters += section.chapters.length;
-        const sectionProgress = course.progress?.progressData?.sections?.find(
+        const sectionProgress = courseProgress.progressData?.sections?.find(
           (s: SectionProgress) => s.sectionId === section.sectionId
         );
         if (sectionProgress?.chapters) {
@@ -133,7 +185,7 @@ const Courses = () => {
     });
     
     return totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
-  }, []);
+  }, [progressData]);
 
   // Enhanced filtering and sorting
   const { filteredCourses, stats } = useMemo(() => {
@@ -436,7 +488,7 @@ const Courses = () => {
   };
 
   // Loading State
-  if (!isLoaded || isLoading) {
+  if (!isLoaded || isLoading || progressLoading) {
     return (
       <Loading />
     );
@@ -528,7 +580,11 @@ const Courses = () => {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-white">
-                        {stats.inProgressCourses}
+                        {progressLoading ? (
+                          <span className="animate-pulse">...</span>
+                        ) : (
+                          stats.inProgressCourses
+                        )}
                       </p>
                       <p className="text-xs text-gray-400">In Progress</p>
                     </div>
@@ -543,7 +599,13 @@ const Courses = () => {
                       <Trophy className="w-5 h-5 text-green-400" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-white">{stats.completedCourses}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {progressLoading ? (
+                          <span className="animate-pulse">...</span>
+                        ) : (
+                          stats.completedCourses
+                        )}
+                      </p>
                       <p className="text-xs text-gray-400">Completed</p>
                     </div>
                   </div>
@@ -563,6 +625,16 @@ const Courses = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Progress Loading Indicator */}
+          {progressLoading && (
+            <div className="mt-4 p-3 bg-blue-600/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-400">
+                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm">Loading course progress...</span>
+              </div>
             </div>
           )}
         </div>
