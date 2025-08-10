@@ -37,23 +37,24 @@ const SignupComponent = () => {
 
   // Save role to Clerk public metadata after signup
   useEffect(() => {
-    if (isSignedIn && role && !roleSaved) {
-      (async () => {
-        setIsSaving(true);
-        try {
-          await (user as UserResource)?.update({
-            publicMetadata: { userType: role },
-          });
-          setRoleSaved(true);
-          router.push(getRedirectUrl(role));
-        } catch (err) {
-          console.error('Error saving role:', err);
-        } finally {
-          setIsSaving(false);
-        }
-      })();
-    }
-  }, [isSignedIn, role, roleSaved, user, router, getRedirectUrl]);
+   if (isSignedIn && role && !roleSaved) {
+    (async () => {
+      setIsSaving(true);
+      try {
+        // Use type assertion to bypass TS type check
+        await (user as any)?.update({
+          publicMetadata: { userType: role },
+        });
+        setRoleSaved(true);
+        router.push(getRedirectUrl(role));
+      } catch (err) {
+        console.error('Error saving role:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    })();
+  }
+}, [isSignedIn, role, roleSaved, user, router, getRedirectUrl]);
 
   return (
     <div className="flex flex-col gap-6">
