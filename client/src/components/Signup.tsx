@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { SignUp, useUser } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useSearchParams, useRouter } from 'next/navigation';
-import type { UserResource } from '@clerk/types';
 
 const SignupComponent = () => {
   const searchParams = useSearchParams();
@@ -42,9 +41,10 @@ const SignupComponent = () => {
       setIsSaving(true);
       try {
         // Use type assertion to bypass TS type check
-        await (user as any)?.update({
-          publicMetadata: { userType: role },
-        });
+        await (user as unknown as { update: (data: Record<string, unknown>) => Promise<void> })
+  ?.update({
+    publicMetadata: { userType: role },
+  });
         setRoleSaved(true);
         router.push(getRedirectUrl(role));
       } catch (err) {
