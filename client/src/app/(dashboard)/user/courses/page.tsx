@@ -116,7 +116,6 @@ const Courses = () => {
             const progressResult = await response.json();
             // Handle the API response structure: {success, message, data}
             const actualProgress = progressResult.data || progressResult;
-            console.log(`Progress for ${course.title}:`, actualProgress);
             return {
               courseId: course.courseId,
               progress: actualProgress,
@@ -556,8 +555,8 @@ const Courses = () => {
       {/* Enhanced Header */}
       <div className="bg-customgreys-secondarybg border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between flex-col xs:flex-row">
+            <div className="mb-4 sm:mb-0">
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <BookOpen className="w-8 h-8 text-blue-400" />
                 My Courses
@@ -575,7 +574,7 @@ const Courses = () => {
 
           {/* Enhanced Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
               <Card className="bg-customgreys-primarybg border-gray-700/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -708,7 +707,7 @@ const Courses = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-col sm:flex-row">
                 {/* Category Filter */}
                 <Select
                   value={selectedCategory}

@@ -1864,17 +1864,12 @@ input[type="color"] {
 
 /* Dashboard Navbar Responsive Enhancements */
 .dashboard-navbar {
-  @apply bg-gray-900/95 backdrop-blur-md border-b border-gray-800;
+  @apply bg-gray-900/95 flex items-center justify-between px-4 py-3 backdrop-blur-md border-b border-gray-800 max-w-full my-0 mx-auto;
 }
 
-.dashboard-navbar__container {
-  @apply flex items-center justify-between px-4 py-3;
-  max-width: 100%;
-  margin: 0 auto;
-}
 
 .dashboard-navbar__search {
-  @apply relative flex-1 max-w-md;
+  @apply relative max-w-md;
 }
 
 .dashboard-navbar__search input {
@@ -1890,9 +1885,6 @@ input[type="color"] {
   @apply absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none;
 }
 
-.dashboard-navbar__actions {
-  @apply flex items-center space-x-3;
-}
 
 @media (max-width: 768px) {
   .dashboard-navbar__container {
@@ -2080,11 +2072,11 @@ input[type="color"] {
 }
 
 .dashboard-navbar__container {
-  @apply flex justify-between items-center w-full my-2 sm:my-3;
+  @apply flex justify-between items-center w-full;
 }
 
 .dashboard-navbar__search {
-  @apply flex justify-between items-center gap-2 sm:gap-5 flex-1 max-w-md mx-4;
+  @apply flex justify-between items-center gap-2 sm:gap-5 max-w-md mx-2;
 }
 
 .dashboard-navbar__search-input {

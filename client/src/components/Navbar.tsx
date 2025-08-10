@@ -2,26 +2,34 @@
 import { useUser } from "@clerk/nextjs";
 import { Search, Zap } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
 import { cn } from "@/lib/utils";
 import CustomUserMenu from "./CustomUserMenu";
 import { motion, AnimatePresence } from "framer-motion";
+import { SidebarTrigger } from "./ui/sidebar";
 
 
 const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
   const { user } = useUser();
+  const pathname = usePathname();
   const userRole = user?.publicMetadata?.userType as "student" | "teacher";
   const [showQuickActions, setShowQuickActions] = useState(false);
+
   
   return (
     <nav className="dashboard-navbar">
-      <div className="dashboard-navbar__container">
+        <div>
+          {isCoursePage && <SidebarTrigger className="dashboard-navbar__sidebar-trigger" />}
+          <SidebarTrigger className="dashboard-navbar__sidebar-trigger md:hidden" />
+        </div>
         <div className="dashboard-navbar__search">
+
           <div className="flex items-center gap-4">
-            <div className="relative group">
+            <div className="group">
               <Link
                 scroll={false}
                 href="/search"
@@ -62,7 +70,7 @@ const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
-              className="absolute bottom-[10px] right-0 mt-2 z-50"
+              className="absolute top-full right-0 mt-2 z-50"
             >
               <QuickActionsMenu
                 userRole={userRole || "student"}
@@ -71,8 +79,6 @@ const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
             </motion.div>
           )}
         </AnimatePresence>
-
-      </div>
     </nav>
   );
 };
