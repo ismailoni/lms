@@ -2,8 +2,7 @@
 import { useUser } from "@clerk/nextjs";
 import { Search, Zap } from "lucide-react";
 import Link from "next/link";
-import React, { useState, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
@@ -15,7 +14,6 @@ import { SidebarTrigger } from "./ui/sidebar";
 
 const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
   const { user } = useUser();
-  const pathname = usePathname();
   const userRole = user?.publicMetadata?.userType as "student" | "teacher";
   const [showQuickActions, setShowQuickActions] = useState(false);
 
