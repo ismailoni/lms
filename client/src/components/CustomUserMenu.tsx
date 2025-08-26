@@ -34,7 +34,7 @@ export default function CustomUserMenu() {
 
   if (!user) return null;
 
-  const userType = user?.publicMetadata?.userType as string;
+  const userType = user?.unsafeMetadata?.userType as string;
   const dashboardLink = userType === "teacher" ? "/teacher/courses" : "/user/courses";
   const profileLink = `/${userType}/profile`;
   const settingsLink = `/${userType}/settings`;

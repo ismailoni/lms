@@ -8,7 +8,7 @@ import CustomUserMenu from "./CustomUserMenu";
 
 const NonDashboardNavbar = () => {
   const {user} = useUser();
-  const userRole = user?.publicMetadata?.userType as "student" | "teacher";
+  const userRole = user?.unsafeMetadata?.userType as "student" | "teacher";
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

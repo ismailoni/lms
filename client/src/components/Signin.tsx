@@ -18,7 +18,7 @@ const SigninComponent = () => {
     if (isCheckoutpage) {
       return `/checkout?step=2&id=${courseId}`;
     }
-    const userType = user?.publicMetadata?.userType as string;
+    const userType = user?.unsafeMetadata?.userType as string;
     if (userType === "teacher") {
       return "/teacher/courses";
     }

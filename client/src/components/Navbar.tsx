@@ -14,7 +14,7 @@ import { SidebarTrigger } from "./ui/sidebar";
 
 const Navbar = ({ isCoursePage }: { isCoursePage: boolean }) => {
   const { user } = useUser();
-  const userRole = user?.publicMetadata?.userType as "student" | "teacher";
+  const userRole = user?.unsafeMetadata?.userType as "student" | "teacher";
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   
