@@ -56,9 +56,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           "dashboard__main",
           isCoursePage && "dashboard__main--course",
           isChapterPage && "dashboard__main--chapter"
-        )} style={{ height: "100vh" }}>
+        )} style={{ height: "100vh", width: "100%" }}>
           <Navbar isCoursePage={isCoursePage}/>
-          <main className="dashboard__body">{children}</main>
+          <main className="dashboard__body overflow-x-hidden w-full">{children}</main>
         </div>
       </div>
     </SidebarProvider>

@@ -527,7 +527,7 @@ const Courses = () => {
   if (isError || !courses || courses.length === 0) {
     return (
       <div className="min-h-screen bg-customgreys-primarybg">
-        <div className="max-w-7xl mx-auto p-6">
+        <div className="w-full px-6 py-6">
           <div className="text-center py-20">
             <div className="relative mb-8">
               <BookOpen className="w-24 h-24 text-gray-500 mx-auto" />
@@ -554,7 +554,7 @@ const Courses = () => {
     <div className="min-h-screen bg-customgreys-primarybg">
       {/* Enhanced Header */}
       <div className="bg-customgreys-secondarybg border-b border-gray-700/50">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="w-full px-6 py-6">
           <div className="flex flex-col gap-4 xs:flex-row xs:items-center xs:justify-between">
             <div className="mb-0">
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -691,7 +691,7 @@ const Courses = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="w-full px-6 py-6 space-y-6">
         {/* Enhanced Filters */}
         <Card className="bg-customgreys-secondarybg border-gray-700/50">
           <CardContent className="p-6">
