@@ -245,8 +245,8 @@ const Course = () => {
 
 
   return (
-    <div className="course min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-800">
-      <div className="course__container max-w-7xl mx-auto px-4 py-6">
+    <div className="course min-h-screen bg-customgreys-primarybg w-full">
+      <div className="course__container w-full px-4 sm:px-6 lg:px-8 py-6">
         {/* Enhanced Breadcrumb with Progress */}
         <div className="course__breadcrumb mb-8 bg-gradient-to-r from-gray-800/90 to-gray-700/90 backdrop-blur-lg rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-600/30 relative overflow-hidden">
           {/* Background Pattern */}
