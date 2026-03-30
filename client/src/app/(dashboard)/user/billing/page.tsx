@@ -166,27 +166,27 @@ const UserBilling = () => {
   const getStatusBadge = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-bg-green-text-green-200">
+        return <Badge className="border border-green-500/30 bg-green-500/15 text-green-300">
           <CheckCircle2 className="w-3 h-3 mr-1" />
           Completed
         </Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-bg-yellow-text-yellow-200">
+        return <Badge className="border border-yellow-500/30 bg-yellow-500/15 text-yellow-300">
           <Clock className="w-3 h-3 mr-1" />
           Pending
         </Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-bg-red-text-red-200">
+        return <Badge className="border border-red-500/30 bg-red-500/15 text-red-300">
           <AlertCircle className="w-3 h-3 mr-1" />
           Failed
         </Badge>;
       case 'refunded':
-        return <Badge className="bg-gray-100 text-gray-bg-gray-text-gray-200">
+        return <Badge className="border border-gray-500/30 bg-gray-500/15 text-gray-300">
           <RefreshCw className="w-3 h-3 mr-1" />
           Refunded
         </Badge>;
       default:
-        return <Badge className="bg-green-100 text-green-bg-green-text-green-200">
+        return <Badge className="border border-green-500/30 bg-green-500/15 text-green-300">
           <CheckCircle2 className="w-3 h-3 mr-1" />
           Completed
         </Badge>;
@@ -206,7 +206,7 @@ const UserBilling = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-customgreys-primarybg flex items-center justify-center">
         <Alert className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -218,22 +218,22 @@ const UserBilling = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-bg-gray-900">
+    <div className="min-h-screen bg-customgreys-primarybg">
       {/* Enhanced Header */}
-      <div className="bg-bg-gray-800 border-b border-gray-border-gray-700">
+      <div className="bg-customgreys-secondarybg border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-text-gray-100 flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
                 <Wallet className="w-8 h-8 text-primary-600" />
                 Billing & Payments
               </h1>
-              <p className="text-gray-text-gray-400 mt-1">
+              <p className="text-gray-400 mt-1">
                 Manage your payment history and billing preferences
               </p>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button variant="outline" className="gap-2">
                 <Download className="w-4 h-4" />
                 Export
@@ -260,7 +260,7 @@ const UserBilling = () => {
             value: formatPrice(stats?.totalSpent),
             icon: DollarSign,
             color: 'text-green-600',
-            bgColor: 'bg-green-bg-green-900/20',
+            bgColor: 'bg-green-500/15',
             change: '+12.5%',
             trend: 'up'
           },
@@ -269,7 +269,7 @@ const UserBilling = () => {
             value: formatPrice(stats?.thisMonthSpent),
             icon: Calendar,
             color: 'text-blue-600',
-            bgColor: 'bg-blue-bg-blue-900/20',
+            bgColor: 'bg-blue-500/15',
             change: null,
             trend: null
           },
@@ -278,7 +278,7 @@ const UserBilling = () => {
             value: stats?.totalTransactions || 0,
             icon: Receipt,
             color: 'text-purple-600',
-            bgColor: 'bg-purple-bg-purple-900/20',
+            bgColor: 'bg-purple-500/15',
             change: null,
             trend: null
           },
@@ -287,7 +287,7 @@ const UserBilling = () => {
             value: formatPrice(stats?.avgTransactionAmount),
             icon: TrendingUp,
             color: 'text-orange-600',
-            bgColor: 'bg-orange-bg-orange-900/20',
+            bgColor: 'bg-orange-500/15',
             change: null,
             trend: null
           },
@@ -303,10 +303,10 @@ const UserBilling = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-text-gray-400 mb-1">
+                    <p className="text-sm text-gray-400 mb-1">
                       {stat.title}
                     </p>
-                    <p className="text-2xl font-bold text-gray-text-gray-100">
+                    <p className="text-2xl font-bold text-white">
                       {stat.value}
                     </p>
                     {stat.change && (
@@ -335,9 +335,9 @@ const UserBilling = () => {
         {/* Enhanced Filters */}
         <Card>
           <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
               {/* Search */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative w-full lg:flex-1 lg:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search transactions..."
@@ -347,10 +347,10 @@ const UserBilling = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex w-full lg:w-auto flex-col sm:flex-row sm:items-center gap-3">
                 {/* Date Range Filter */}
                 <Select value={dateRange} onValueChange={setDateRange}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <Calendar className="w-4 h-4 mr-2" />
                     <SelectValue placeholder="Date range" />
                   </SelectTrigger>
@@ -364,7 +364,7 @@ const UserBilling = () => {
 
                 {/* Payment Type Filter */}
                 <Select value={paymentType} onValueChange={setPaymentType}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <Filter className="w-4 h-4 mr-2" />
                     <SelectValue placeholder="Payment type" />
                   </SelectTrigger>
@@ -382,7 +382,7 @@ const UserBilling = () => {
 
                 {/* Status Filter */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -409,7 +409,7 @@ const UserBilling = () => {
 
             {/* Active Filters */}
             {(searchTerm || paymentType !== 'all' || statusFilter !== 'all' || dateRange !== 'all') && (
-              <div className="flex items-center gap-2 mt-4">
+              <div className="flex flex-wrap items-center gap-2 mt-4">
                 <span className="text-sm text-gray-500">Active filters:</span>
                 {searchTerm && (
                   <Badge variant="secondary" className="gap-1">
@@ -441,7 +441,7 @@ const UserBilling = () => {
         </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid h-auto w-full grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="transactions">Transaction History</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="methods">Payment Methods</TabsTrigger>
@@ -488,7 +488,7 @@ const UserBilling = () => {
                         {filteredData.map((transaction) => (
                           <TableRow
                             key={transaction.transactionId}
-                            className="hover:bg-gray-hover:bg-gray-800/50"
+                              className="hover:bg-gray-800/50"
                           >
                             <TableCell className="font-medium">
                               <div>
@@ -541,7 +541,7 @@ const UserBilling = () => {
                 ) : (
                   <div className="text-center py-12">
                     <Receipt className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-text-gray-100 mb-2">
+                    <h3 className="text-lg font-medium text-white mb-2">
                       No transactions found
                     </h3>
                     <p className="text-gray-500 mb-4">
@@ -617,14 +617,14 @@ const UserBilling = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 bg-blue-bg-blue-900/20 rounded-lg">
+                  <div className="p-4 bg-blue-500/15 rounded-lg border border-blue-500/20">
                     <div className="flex items-center gap-2 mb-2">
                       <Info className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-text-blue-100">
+                      <span className="text-sm font-medium text-blue-200">
                         Monthly Average
                       </span>
                     </div>
-                    <p className="text-2xl font-bold text-blue-text-blue-100">
+                    <p className="text-2xl font-bold text-blue-200">
                       {formatPrice(stats?.avgTransactionAmount)}
                     </p>
                   </div>
@@ -666,7 +666,7 @@ const UserBilling = () => {
               <CardContent>
                 <div className="text-center py-12">
                   <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-text-gray-100 mb-2">
+                  <h3 className="text-lg font-medium text-white mb-2">
                     No payment methods saved
                   </h3>
                   <p className="text-gray-500 mb-4">
@@ -683,15 +683,15 @@ const UserBilling = () => {
         </Tabs>
 
         {/* Security Notice */}
-        <Card className="bg-green-bg-green-900/20 border-green-border-green-800">
+        <Card className="bg-green-500/15 border-green-500/30">
           <CardContent className="p-6">
             <div className="flex gap-3">
               <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-medium text-green-text-green-100 mb-2">
+                <h4 className="font-medium text-green-200 mb-2">
                   🔒 Your payments are secure
                 </h4>
-                <p className="text-sm text-green-text-green-200">
+                <p className="text-sm text-green-300">
                   All transactions are encrypted and processed through secure payment gateways. 
                   We never store your complete payment information.
                 </p>

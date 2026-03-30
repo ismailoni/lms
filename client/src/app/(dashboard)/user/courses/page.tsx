@@ -311,7 +311,7 @@ const Courses = () => {
         >
           <Card className="bg-customgreys-primarybg border-gray-700/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/30 transition-all duration-300 cursor-pointer group hover:-translate-y-1">
             <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Course Image */}
                 <div className="relative flex-shrink-0">
                   {course.image ? (
@@ -320,10 +320,10 @@ const Courses = () => {
                       alt={course.title}
                       width={80}
                       height={60}
-                      className="w-20 h-15 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                      className="w-20 h-16 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-20 h-15 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                    <div className="w-20 h-16 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
                       <BookOpen className="w-6 h-6 text-blue-400" />
                     </div>
                   )}
@@ -555,8 +555,8 @@ const Courses = () => {
       {/* Enhanced Header */}
       <div className="bg-customgreys-secondarybg border-b border-gray-700/50">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between flex-col xs:flex-row">
-            <div className="mb-4 sm:mb-0">
+          <div className="flex flex-col gap-4 xs:flex-row xs:items-center xs:justify-between">
+            <div className="mb-0">
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <BookOpen className="w-8 h-8 text-blue-400" />
                 My Courses
@@ -566,7 +566,7 @@ const Courses = () => {
               </p>
             </div>
 
-            <Button className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-blue-500/25">
+            <Button className="w-full xs:w-auto gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-blue-500/25">
               <Plus className="w-4 h-4" />
               Browse More Courses
             </Button>
@@ -695,9 +695,9 @@ const Courses = () => {
         {/* Enhanced Filters */}
         <Card className="bg-customgreys-secondarybg border-gray-700/50">
           <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
               {/* Search */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative w-full lg:flex-1 lg:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search courses..."
@@ -707,13 +707,13 @@ const Courses = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-3 flex-col sm:flex-row">
+              <div className="flex w-full lg:w-auto items-stretch sm:items-center gap-3 flex-col sm:flex-row">
                 {/* Category Filter */}
                 <Select
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
-                  <SelectTrigger className="w-[180px] bg-customgreys-primarybg border-gray-700/50 text-white">
+                  <SelectTrigger className="w-full sm:w-[180px] bg-customgreys-primarybg border-gray-700/50 text-white">
                     <Filter className="w-4 h-4 mr-2 text-gray-400" />
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
@@ -738,7 +738,7 @@ const Courses = () => {
                   value={sortBy}
                   onValueChange={(value: SortOption) => setSortBy(value)}
                 >
-                  <SelectTrigger className="w-[150px] bg-customgreys-primarybg border-gray-700/50 text-white">
+                  <SelectTrigger className="w-full sm:w-[150px] bg-customgreys-primarybg border-gray-700/50 text-white">
                     <BarChart3 className="w-4 h-4 mr-2 text-gray-400" />
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
@@ -793,24 +793,24 @@ const Courses = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-3 bg-customgreys-secondarybg border-gray-700/50">
+          <TabsList className="grid h-auto w-full grid-cols-1 sm:grid-cols-3 bg-customgreys-secondarybg border-gray-700/50">
             <TabsTrigger 
               value="all" 
-              className="gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-blue-600"
+              className="justify-start sm:justify-center gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-blue-600"
             >
               <BookOpen className="w-4 h-4" />
               All Courses ({courses?.length || 0})
             </TabsTrigger>
             <TabsTrigger 
               value="in-progress" 
-              className="gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-orange-600"
+              className="justify-start sm:justify-center gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-orange-600"
             >
               <Flame className="w-4 h-4" />
               In Progress ({stats?.inProgressCourses || 0})
             </TabsTrigger>
             <TabsTrigger 
               value="completed" 
-              className="gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-green-600"
+              className="justify-start sm:justify-center gap-2 text-gray-400 data-[state=active]:text-white data-[state=active]:bg-green-600"
             >
               <Trophy className="w-4 h-4" />
               Completed ({stats?.completedCourses || 0})

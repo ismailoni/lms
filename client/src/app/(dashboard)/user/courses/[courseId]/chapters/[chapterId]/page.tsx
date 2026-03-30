@@ -243,42 +243,38 @@ const Course = () => {
     console.error("Progress loading error:", progressError);
   }
 
-  // If userProgress is not available, we can still show the course content
-  // The progress functionality just won't be available until it loads
-  console.log("Course loaded:", course);
-  console.log("User progress:", userProgress);
 
   return (
     <div className="course min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-800">
       <div className="course__container max-w-7xl mx-auto px-4 py-6">
         {/* Enhanced Breadcrumb with Progress */}
-        <div className="course__breadcrumb mb-8 bg-gradient-to-r from-gray-800/90 to-gray-700/90 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-gray-600/30 relative overflow-hidden">
+        <div className="course__breadcrumb mb-8 bg-gradient-to-r from-gray-800/90 to-gray-700/90 backdrop-blur-lg rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-600/30 relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
           <div className="absolute -top-4 -right-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
           <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
           
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <div className="course__path text-sm text-gray-300 font-medium flex items-center gap-2">
-                <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-1.5 rounded-full">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+              <div className="course__path min-w-0 text-sm text-gray-300 font-medium flex flex-wrap items-center gap-2">
+                <div className="max-w-full flex items-center gap-2 bg-gray-700/50 px-3 py-1.5 rounded-full">
                   <BookOpen className="w-4 h-4 text-blue-400" />
-                  <span className="hover:text-blue-400 cursor-pointer transition-colors">
+                  <span className="truncate hover:text-blue-400 cursor-pointer transition-colors">
                     {course.title}
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-500" />
-                <span className="hover:text-blue-400 cursor-pointer transition-colors bg-gray-700/30 px-3 py-1.5 rounded-full">
+                <span className="max-w-full truncate hover:text-blue-400 cursor-pointer transition-colors bg-gray-700/30 px-3 py-1.5 rounded-full">
                   {currentSection?.sectionTitle}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-500" />
-                <span className="course__current-chapter text-blue-400 font-semibold bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30">
+                <span className="course__current-chapter max-w-full truncate text-blue-400 font-semibold bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30">
                   {currentChapter?.title}
                 </span>
               </div>
               
               {/* Enhanced Action Buttons */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   variant="outline"
                   size="sm"
@@ -324,8 +320,8 @@ const Course = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <h1 className="course__title text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <h1 className="course__title text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent break-words">
                 {currentChapter?.title}
               </h1>
               
@@ -355,10 +351,10 @@ const Course = () => {
             </div>
 
             {/* Enhanced Instructor Info */}
-            <div className="course__header mt-8 flex items-center justify-between bg-gray-800/50 rounded-2xl p-6 border border-gray-600/30">
-              <div className="course__instructor flex items-center gap-4">
+            <div className="course__header mt-8 flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-600/30">
+              <div className="course__instructor flex items-center gap-4 min-w-0">
                 <div className="relative">
-                  <Avatar className="course__avatar h-14 w-14 border-3 border-blue-400 shadow-lg shadow-blue-400/25">
+                  <Avatar className="course__avatar h-14 w-14 border-[3px] border-blue-400 shadow-lg shadow-blue-400/25">
                     <AvatarImage alt={course.teacherName} />
                     <AvatarFallback className="course__avatar-fallback bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
                       {course.teacherName[0]}
@@ -366,9 +362,9 @@ const Course = () => {
                   </Avatar>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-800 animate-pulse"></div>
                 </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="course__instructor-name font-bold text-xl text-white">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3 mb-1">
+                    <span className="course__instructor-name truncate font-bold text-xl text-white">
                       {course.teacherName}
                     </span>
                     <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 shadow-lg">
@@ -381,7 +377,7 @@ const Course = () => {
               </div>
 
               {/* Enhanced Chapter Meta */}
-              <div className="flex items-center gap-8 text-sm text-gray-300">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm text-gray-300">
                 <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded-lg">
                   {currentChapter?.type === "Text" ? (
                     <FileText className="w-4 h-4 text-green-400" />
@@ -455,23 +451,23 @@ const Course = () => {
               <CardContent className="p-0 relative z-10">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="course__tabs">
                   <div className="border-b border-gray-600/50 bg-gray-800/50 backdrop-blur-sm">
-                    <TabsList className="course__tabs-list h-16 bg-transparent p-0 px-6 gap-8 w-full justify-start">
+                    <TabsList className="course__tabs-list h-16 bg-transparent p-0 px-4 sm:px-6 gap-2 sm:gap-4 w-full justify-start overflow-x-auto whitespace-nowrap">
                       <TabsTrigger 
-                        className="course__tab relative px-4 py-4 bg-transparent border-b-3 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-400 font-semibold transition-all duration-300 hover:text-blue-400 data-[state=active]:bg-blue-500/10 rounded-t-lg" 
+                        className="course__tab relative px-4 py-4 bg-transparent border-b-[3px] border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-400 font-semibold transition-all duration-300 hover:text-blue-400 data-[state=active]:bg-blue-500/10 rounded-t-lg" 
                         value="Notes"
                       >
                         <FileText className="w-5 h-5 mr-2" />
                         Notes
                       </TabsTrigger>
                       <TabsTrigger 
-                        className="course__tab relative px-4 py-4 bg-transparent border-b-3 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-400 font-semibold transition-all duration-300 hover:text-green-400 data-[state=active]:bg-green-500/10 rounded-t-lg" 
+                        className="course__tab relative px-4 py-4 bg-transparent border-b-[3px] border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-400 font-semibold transition-all duration-300 hover:text-green-400 data-[state=active]:bg-green-500/10 rounded-t-lg" 
                         value="Resources"
                       >
                         <Download className="w-5 h-5 mr-2" />
                         Resources
                       </TabsTrigger>
                       <TabsTrigger 
-                        className="course__tab relative px-4 py-4 bg-transparent border-b-3 border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 font-semibold transition-all duration-300 hover:text-purple-400 data-[state=active]:bg-purple-500/10 rounded-t-lg" 
+                        className="course__tab relative px-4 py-4 bg-transparent border-b-[3px] border-transparent data-[state=active]:border-purple-500 data-[state=active]:text-purple-400 font-semibold transition-all duration-300 hover:text-purple-400 data-[state=active]:bg-purple-500/10 rounded-t-lg" 
                         value="Quiz"
                       >
                         <Lightbulb className="w-5 h-5 mr-2" />
@@ -480,7 +476,7 @@ const Course = () => {
                     </TabsList>
                   </div>
 
-                  <div className="p-8">
+                  <div className="p-4 sm:p-6 lg:p-8">
                     <TabsContent className="course__tab-content mt-0" value="Notes">
                       <div className="space-y-6">
                         <div className="flex items-center justify-between">

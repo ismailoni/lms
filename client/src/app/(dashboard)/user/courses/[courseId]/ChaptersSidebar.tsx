@@ -134,7 +134,7 @@ const ChaptersSidebar = () => {
     0
   );
   const overallProgress =
-    totalChapters > 0 ? (completedTotal || 1 / totalChapters) * 100 : 0;
+    totalChapters > 0 ? ((completedTotal ?? 0) / totalChapters) * 100 : 0;
 
   return (
     <Sidebar
