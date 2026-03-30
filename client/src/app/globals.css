@@ -1051,7 +1051,7 @@ input[type="color"] {
 
 /* Course Page */
 .course {
-  @apply flex h-[100vh];
+  @apply w-full min-h-screen bg-customgreys-primarybg;
 }
 
 /* Chapters Sidebar Enhancements */
