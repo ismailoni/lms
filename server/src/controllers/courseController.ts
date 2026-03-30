@@ -1,15 +1,13 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth } from "@clerk/express";
-import { PrismaClient } from '@prisma/client';
+import prisma from "../utils/prisma";
 
 import CourseModel from "../models/prisma/courseModel";
 import TeacherEarningsModel from "../models/prisma/teacherEarningsModel";
 import UserCourseProgressModel from "../models/prisma/userCourseProgressModel";
 import TransactionModel from "../models/prisma/transactionModel";
 import cloudinary from "../utils/cloudinary";
-
-const prisma = new PrismaClient();
 
 export const listCourses = async (req: Request, res: Response) => {
   const { category } = req.query;

@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
-    "scripts": {
+  "scripts": {
     "build": "npm run db:generate && rimraf dist && npx tsc && cpx \"src/seed/data/**/*\" dist/seed/data",
     "start": "npm run db:migrate:deploy && npm run build && node dist/index.js",
     "dev": "npm run build && concurrently \"npx tsc -w\" \"nodemon --exec ts-node src/index.ts\"",
@@ -21,6 +21,7 @@
   "description": "",
   "dependencies": {
     "@clerk/express": "^1.3.33",
+    "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@types/pg": "^8.15.4",
     "body-parser": "^1.20.3",

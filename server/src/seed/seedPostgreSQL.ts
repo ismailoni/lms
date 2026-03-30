@@ -4,21 +4,19 @@ import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
 import {
-  PrismaClient,
   CourseLevel,
   CourseStatus,
   PaymentProvider,
   Prisma,
 } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
+import prisma from "../utils/prisma";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 console.log(
   "Loaded DATABASE_URL:",
   process.env.DATABASE_URL || "❌ Not found!"
 );
-
-const prisma = new PrismaClient();
 
 const dataPath = (...p: string[]) => path.join(__dirname, "data", ...p);
 const readJSON = <T = any>(p: string): T =>
